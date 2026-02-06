@@ -17,10 +17,10 @@ const registerUser = asyncHandler ( async ( req , res ) => {
 
     const user = await User.create({
         fullName,
-        userName : userName.toLowerCase(),
+        userName,
         email : email.toLowerCase(),
         password
-    })
+    });
 
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();

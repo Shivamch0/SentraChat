@@ -2,6 +2,7 @@ import { User } from "../models/user.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import jwt from "jsonwebtoken"
 
 const registerUser = asyncHandler ( async ( req , res ) => {
     const { fullName , userName , email , password } = req.body;
@@ -36,10 +37,20 @@ const registerUser = asyncHandler ( async ( req , res ) => {
         throw new ApiError(401 , "Something went wrong while creating user...")
     }
 
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+        path: "/",
+        maxAge : 7 * 24 * 60 * 60 * 1000
+    };
+
     return res.status(200)
-            .json(
-                new ApiResponse(200 , { user : createdUser } , "User created successfully...")
-            )
+        .cookies("accessToken" , accessToken , options)
+        .cookies("refreshToken" , refreshToken , options)
+        .json(
+            new ApiResponse(200 , { user : createdUser } , "User created successfully...")
+        )
 })
 
 const loginUser = asyncHandler ( async ( req , res ) => {
@@ -72,13 +83,92 @@ const loginUser = asyncHandler ( async ( req , res ) => {
         throw new ApiError(401 , "Something went wrong while logging...");
     }
 
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+        path: "/",
+        maxAge : 7 * 24 * 60 * 60 * 1000
+    };
+
     return res.status(200)
-            .json(
-                new ApiResponse(201 , {user : loggedInUser} , " User logged in successfully...")
-            )
+        .cokkies("accessToken" , accessToken , options)   
+        .cokkies("refreshToken" , refreshToken , options)   
+        .json(
+            new ApiResponse(201 , {user : loggedInUser} , " User logged in successfully...")
+        )
 });
 
+const logoutUser = asyncHandler ( async ( req , res ) => {
+    const refreshToken = req.cookies?.refreshToken 
+    if(!refreshToken){
+        throw new ApiError(401 , "No Refresh Token Provided...")
+    }
+
+    const user = await User.findOne({refreshToken});
+    if(!user){
+        throw new ApiError(401 , "User not found or already logout...")
+    }
+
+    user.refreshToken = null;
+    await user.save({validateBeforeSave : false})
+
+    const options = {
+        httpOnly : true,
+        secure : process.env.NODE_ENV === "production",
+        sameSite : "none",
+        path : "/",
+        maxAge : 7 * 24 * 60 *60 *1000
+    }
+
+    res.clearCookie("accessToken" , accessToken)
+    res.clearCookie("refreshToken" , refreshToken)
+    .status(200)
+    .json(new ApiResponse(201 , {} , "User Logout Successfully..."))
+    
+});
+
+const refreshAccessToken = asyncHandler ( async ( req , res ) => {
+    const incomingRefreshToken = req.cokkies?.refreshToken || req.body.refreshToken;
+    if(!incomingRefreshToken){
+        throw new ApiError(401 , "Refresh Token not found...");
+    }
+
+    const decoded =  jwt.verify(incomingRefreshToken , process.env.REFRESH_TOKEN_SECRET);
+     
+    const user = await User.findById(decoded._id);
+    if(!user){
+        throw new ApiError(401 , "User not found...")
+    }
+
+    if(user.refreshToken !== incomingRefreshToken){
+        throw new ApiError(401 , "Invalid refreshToken...")
+    }
+
+    const accessToken = await user.generateAccessToken();
+    const newRefreshToken = await user.generateRefreshToken();
+
+    user.refreshToken = newRefreshToken;
+    await user.save({validateBeforeSave : false})
+
+    const options = {
+        httpOnly : true,
+        secure : process.env.NODE_ENV === "production",
+        sameSite : "none",
+        path : "/",
+        maxAge :  7 * 24 * 60 * 60 * 1000
+    }
+
+    return res.status(200)
+        .cokkies("accessToken" , accessToken , options)
+        .cokkies("refreshToken" ,newRefreshToken , options)
+        .json(
+            new ApiResponse(201 , {accessToken , refreshToken : newRefreshToken} , "Refresh Token Update successfully...")
+        )
+})
 
 
 
-export { registerUser , loginUser }
+
+
+export { registerUser , loginUser , logoutUser , refreshAccessToken }

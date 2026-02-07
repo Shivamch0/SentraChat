@@ -46,8 +46,8 @@ const registerUser = asyncHandler ( async ( req , res ) => {
     };
 
     return res.status(200)
-        .cookies("accessToken" , accessToken , options)
-        .cookies("refreshToken" , refreshToken , options)
+        .cookie("accessToken" , accessToken , options)
+        .cookie("refreshToken" , refreshToken , options)
         .json(
             new ApiResponse(200 , { user : createdUser } , "User created successfully...")
         )
@@ -92,8 +92,8 @@ const loginUser = asyncHandler ( async ( req , res ) => {
     };
 
     return res.status(200)
-        .cokkies("accessToken" , accessToken , options)   
-        .cokkies("refreshToken" , refreshToken , options)   
+        .cookie("accessToken" , accessToken , options)   
+        .cookie("refreshToken" , refreshToken , options)   
         .json(
             new ApiResponse(201 , {user : loggedInUser} , " User logged in successfully...")
         )
@@ -121,8 +121,8 @@ const logoutUser = asyncHandler ( async ( req , res ) => {
         maxAge : 7 * 24 * 60 *60 *1000
     }
 
-    res.clearCookie("accessToken" , accessToken)
-    res.clearCookie("refreshToken" , refreshToken)
+    res.clearCookie("accessToken" , options)
+    res.clearCookie("refreshToken" , options)
     .status(200)
     .json(new ApiResponse(201 , {} , "User Logout Successfully..."))
     
@@ -160,8 +160,8 @@ const refreshAccessToken = asyncHandler ( async ( req , res ) => {
     }
 
     return res.status(200)
-        .cokkies("accessToken" , accessToken , options)
-        .cokkies("refreshToken" ,newRefreshToken , options)
+        .cokkie("accessToken" , accessToken , options)
+        .cokkie("refreshToken" ,newRefreshToken , options)
         .json(
             new ApiResponse(201 , {accessToken , refreshToken : newRefreshToken} , "Refresh Token Update successfully...")
         )

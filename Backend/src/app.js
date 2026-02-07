@@ -13,7 +13,9 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 import userRoute from "./routes/user.routes.js";
+import messageRoute from "./routes/message.routes.js";
 
-app.use("/api/v1/users" , userRoute)
+app.use("/api/v1/users" , userRoute);
+app.use("/api/vi/messages" , messageRoute)
 
 export default app;

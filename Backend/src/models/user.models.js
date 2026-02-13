@@ -29,6 +29,15 @@ const userSchema = new mongoose.Schema({
     },
     refreshToken : {
         type : String
+    }, 
+    avatar : {
+        type : String
+    },
+    isOnline : {
+        type : Boolean 
+    },
+    lastDate : {
+        type : Date
     }
 } , {timestamps : true})
 

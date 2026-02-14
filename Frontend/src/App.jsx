@@ -1,8 +1,8 @@
 import React from "react";
 import { Routes , Route } from "react-router-dom"
 import Chat from "./Pages/Chat";
-import SignUp from "./Pages/SignUp.jsx";
-import Login from "./Pages/Login";
+import SignUp from "./Pages/SignUp/SignUp.jsx";
+import Login from "./Pages/Login/Login";
 
 function App() {
 

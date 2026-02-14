@@ -1,0 +1,70 @@
+.container{
+    min-height: 100vh;
+    background-image: url('./../../assets/Back.png');
+    background-size: cover;
+    background-repeat: no-repeat ;
+    padding: 1px;
+}
+
+.imgbox{
+    text-align: center;
+    position: relative;
+    top: 60px;
+}
+
+.imgbox img{
+    height: 300px;
+    width: 400px;
+}
+
+.formContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-inline: 120px;
+}
+
+.formContainer form{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.formContainer h2{
+    font-size: 2rem;
+    color: #6D5DF6;
+    text-align: center;
+}
+
+.signUpPara{
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+}
+
+.formContainer p{
+    text-align: center;
+    color: #6B7280;
+}
+
+.formContainer input{
+    padding: 10px 20px;
+    background-color: #EEF2F7;
+    border-radius: 20px;
+    border: 1px solid #D1D5DB;
+    outline: none;
+    margin-bottom: 10px;
+}
+
+.formContainer button{
+    padding: 10px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    background: linear-gradient(90deg, #7C3AED, #6D5DF6);
+    color: white;
+}
+
+.formContainer a{
+    text-decoration: none;
+}

@@ -1,0 +1,49 @@
+.chatContainer {
+  display: flex; 
+}
+
+.chatPannel{
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+}
+
+.topSection{
+    display: flex;
+    height: 15vh;
+    justify-content: space-between;
+    padding-inline: 10px;
+    align-items: center;
+}
+
+.userInfo{
+    display: flex;
+    gap: 20px;
+}
+
+.userInfo img {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+}
+
+.icons i{
+    margin-right: 30px;
+    color: gray;
+    font-size: 1.5rem;
+}
+
+.middleSection{
+    height: 75vh; 
+    background:lightgray;
+}
+
+.chatSection{
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.bottomSection{
+    height: 10vh;
+}

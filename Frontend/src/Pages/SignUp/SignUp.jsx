@@ -7,7 +7,6 @@ function SignUp() {
   return (
     <>
       <div className={style.container}>
-          
           <div className={style.imgbox}>
             <img src={purpleLike} className='h-76 w-130' />
           </div>

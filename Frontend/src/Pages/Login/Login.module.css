@@ -30,11 +30,7 @@ body {
   align-items: center;
   width: 60%;
   gap: 20px;
-  background: rgba(255, 255, 255, 0.85);
   padding: 30px 40px;
-  border-radius: 25px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   position: relative;
 }
 
@@ -163,6 +159,11 @@ body {
 }
 
 @media (min-width: 992px) {
+
+  .container{
+    background-image: url('./../../assets/desktop.png');
+  }
+
   .formContainer {
     width: 50%;
   }

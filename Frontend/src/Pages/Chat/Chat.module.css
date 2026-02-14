@@ -67,7 +67,7 @@
 }
 
 .senderMessage{
-    align-self: flex-end; 
+    align-self: self-end; 
     width: 70%;
 }
 

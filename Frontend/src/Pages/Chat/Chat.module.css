@@ -5,12 +5,12 @@
 .chatPannel{
     display: flex;
     flex-direction: column;
-    width: 70%;
+    width: 100%;
 }
 
 .topSection{
     display: flex;
-    height: 15vh;
+    height: 10vh;
     justify-content: space-between;
     padding-inline: 10px;
     align-items: center;
@@ -34,7 +34,7 @@
 }
 
 .middleSection{
-    height: 75vh; 
+    height: 80vh; 
     background:lightgray;
 }
 
@@ -42,6 +42,49 @@
     display: flex;
     flex-direction: column;
     padding: 10px;
+}
+
+.chatSection input{
+    padding: 10px 20px;
+    outline: none;
+    border: none;
+    border-radius: 25px;
+}
+
+.chat{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.day{
+    align-self: center;
+    margin-top: 10px;
+    background-color: lightblue;
+    padding: 5px 10px;
+    border-radius: 25px;
+    font-size: 12px;
+}
+
+.senderMessage{
+    align-self: flex-end; 
+    width: 70%;
+}
+
+.senderMessage p{
+    display: inline-block;
+    text-align: end;
+    background-color: blue;
+    padding: 10px 20px;
+    border-radius: 25px;
+}
+
+.recieverMessage{
+    align-self: self-start;
+    background-color: white;
+    padding: 10px 20px;
+    width: 70%;
+    border-radius: 25px;
 }
 
 .bottomSection{

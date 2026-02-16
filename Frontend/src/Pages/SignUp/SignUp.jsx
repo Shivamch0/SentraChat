@@ -1,9 +1,26 @@
 import React from 'react';
 import style from "./SignUp.module.css";
 import purpleLike from '../../assets/like2.png';
-import { Link } from "react-router-dom";
+import { Link , useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import { signUpSchema } from '../../validations/signUpSchema';
 
 function SignUp() {
+
+  const navigate = useNavigate();
+  const { values , handleChange , handleSubmit , errors } = useFormik({
+    initialValues : {
+      fullName : "",
+      userName : "",
+      email : "",
+      password : ""
+    },
+    validationSchema : signUpSchema,
+    onSubmit : (values) => {
+      navigate("/signUp")
+    }
+  })
+
   return (
     <>
       <div className={style.container}>
@@ -12,15 +29,21 @@ function SignUp() {
           </div>
 
           <div className={style.formContainer}>
-              <form action="">
+              <form action="" onSubmit={handleSubmit}>
                 <h2>Create Account</h2>
                 <p className={style.signUpPara}> Sign up to get started!</p>
 
-                <input type="text"  placeholder="Name" name='name'/>
+                <input type="text"  placeholder="Fullname" name='name' onChange={handleChange} value={values.fullName}/>
+                {errors.fullName && <p>{errors.fullName}</p>}
 
-                <input type="email" placeholder='Email' name='email'/>
+                <input type="text"  placeholder="Username" name='name' onChange={handleChange} value={values.userName}/>
+                {errors.userName && <p>{errors.userName}</p>}
 
-                <input type="password" placeholder='Password' name="password"  />
+                <input type="email" placeholder='Email' name='email' onChange={handleChange} value={values.email}/>
+                {errors.email && <p>{errors.email}</p>}
+
+                <input type="password" placeholder='Password' name="password"  onChange={handleChange} value={values.password} />
+                {errors.password && <p>{errors.password}</p>}
 
                 <p>By signing up, you agree to our Terms & Privacy Policy</p>
 

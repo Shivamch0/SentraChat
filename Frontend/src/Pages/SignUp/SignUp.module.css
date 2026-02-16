@@ -12,7 +12,7 @@
 .imgbox{
     text-align: center;
     position: relative;
-    top: 60px;
+    top: 30px;
 }
 
 .imgbox img{
@@ -25,13 +25,13 @@
     align-items: center;
     gap: 20px;
     padding-inline: 120px;
-    margin-top: 30px;
+    margin-top: 10px;
 }
 
 .formContainer form{
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
 }
 
 .formContainer h2{
@@ -66,6 +66,7 @@
     outline: none;
     background: linear-gradient(90deg, #7C3AED, #6D5DF6);
     color: white;
+    cursor: pointer;
 }
 
 .formContainer a{

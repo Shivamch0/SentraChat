@@ -1,7 +1,8 @@
 .sideBar {
   min-height: 100vh;
   max-width: 30%;
-  background: #4a8fe7;
+  background: linear-gradient(180deg, #4A90E2, #1F5FBF)
+;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -63,7 +64,7 @@
 
 @media (min-width: 576px) {
   .sideBarLogo img {
-    height: 40px;
+    height: 35px;
   }
 
   .chatPersons {
@@ -89,7 +90,7 @@
     max-width: 25%;
   }
   .sideBarLogo img {
-    height: 50px;
+    height: 45px;
   }
 
   .chatPersons {
@@ -99,6 +100,6 @@
 
 @media (min-width: 1080px) {
   .sideBar {
-    max-width: 23%;
+    max-width: 25%;
   }
 }

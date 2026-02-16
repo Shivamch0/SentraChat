@@ -29,39 +29,48 @@ function Chat() {
             <section className={style.chatSection}>
               <input type="text" placeholder="Search" />
 
-            <div className={style.chat}>
-              
-              <div className={style.day}>
-                <p>Today 1:23</p>
-              </div>
+              <div className={style.chat}>
+                <div className={style.day}>
+                  <p>Today 1:23</p>
+                </div>
 
-              <div className={style.senderMessage}>
-                <p>Hey John! How are you?</p>
-              </div>
+                <div className={style.senderMessage}>
+                  <p>Hey John! How are you?</p>
+                </div>
 
-              <div className={style.recieverMessage}>
-                <p>Hi! I'm doing great, thanks for asking. How about you?</p>
-              </div>
+                <div className={style.recieverMessage}>
+                  <p>Hi! I'm doing great, thanks for asking. How about you?</p>
+                </div>
 
-              <div className={style.senderMessage}>
-                <p>Not too bad, just been busy with work. Managed to finish that big project</p>
-              </div>
+                <div className={style.senderMessage}>
+                  <p>
+                    Not too bad, just been busy with work. Managed to finish
+                    that big project
+                  </p>
+                </div>
 
-              <div className={style.recieverMessage}>
-                <p>Thats great to hear! Lets catch up soon.</p>
-              </div>
+                <div className={style.recieverMessage}>
+                  <p>Thats great to hear! Lets catch up soon.</p>
+                </div>
 
-              <div className={style.senderMessage}>
-                <p>John is typing...</p>
+                <div className={style.senderMessage}>
+                  <p>John is typing...</p>
+                </div>
               </div>
-
-            </div>
             </section>
           </section>
 
           <section className={style.bottomSection}>
-            <input type="text" placeholder="Type a message..." />
-            <button>Send</button>
+            <div className={style.messageContainer}>
+              <div className={style.messageBar}>
+                <i className="fa-solid fa-plus"></i>
+
+                <input type="text" placeholder="Type a message" />
+
+                <i className="fa-regular fa-face-smile"></i>
+              </div>
+              <button>Send</button>
+            </div>
           </section>
         </div>
       </div>

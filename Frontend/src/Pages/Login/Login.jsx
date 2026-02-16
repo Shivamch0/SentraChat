@@ -18,7 +18,7 @@ function Login() {
     },
     validationSchema : loginSchema,
     onSubmit : (values) => {
-      navigate("/")
+      navigate("/chat")
     }
   })
   return (

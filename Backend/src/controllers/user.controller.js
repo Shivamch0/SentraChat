@@ -124,7 +124,7 @@ const logoutUser = asyncHandler ( async ( req , res ) => {
     res.clearCookie("accessToken" , options)
     res.clearCookie("refreshToken" , options)
     .status(200)
-    .json(new ApiResponse(201 , {} , "User Logout Successfully..."))
+    .json(new ApiResponse(200 , {} , "User Logout Successfully..."))
     
 });
 
@@ -160,8 +160,8 @@ const refreshAccessToken = asyncHandler ( async ( req , res ) => {
     }
 
     return res.status(200)
-        .cokkie("accessToken" , accessToken , options)
-        .cokkie("refreshToken" ,newRefreshToken , options)
+        .cookie("accessToken" , accessToken , options)
+        .cookie("refreshToken" ,newRefreshToken , options)
         .json(
             new ApiResponse(201 , {accessToken , refreshToken : newRefreshToken} , "Refresh Token Update successfully...")
         )

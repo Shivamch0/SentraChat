@@ -1,9 +1,174 @@
-.homeContainer{
-    min-height: 100vh;
-    background-image: url('../../assets/Cloud.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+.homeContainer {
+  min-height: 100vh;
+  background-image: url("../../assets/Cloud.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
+.details {
+  display: flex;
+  flex-direction: column;
+}
+
+.navLogo img {
+  height: 200px;
+}
+
+.contentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-inline: 20px;
+}
+
+.content h3 {
+  color: #2d4e9d;
+  font-size: 2rem;
+}
+
+.content p {
+  color: #6b7280;
+  width: 300px;
+}
+
+.button {
+  display: flex;
+  gap: 30px;
+}
+
+.button button {
+  border-radius: 25px;
+  border: none;
+}
+
+.getStarted {
+  background: linear-gradient(to right, #4a7bef, #3b82f6);
+  color: #ffffff;
+  padding: 10px;
+}
+
+.getStarted:hover {
+  cursor: pointer;
+  background: linear-gradient(to right, #5fa2e8, #8fbdeb, #f4f7fb);
+  color: #3b6fe0;
+}
+
+.loginBtn {
+  padding: 10px 30px;
+  background: linear-gradient(to left, #5fa2e8, #8fbdeb, #f4f7fb);
+  color: #3b6fe0;
+}
+
+.loginBtn:hover {
+  cursor: pointer;
+  background: linear-gradient(to right, #4a7bef, #3b82f6);
+  color: #ffffff;
+}
+
+.lowerPart {
+  display: flex;
+  gap: 5px;
+}
+
+.lowerPart p {
+  color: #9ca3af;
+}
+
+.lowerPart a {
+  text-decoration: none;
+  color: #3b6fe0;
+}
+
+.image {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  align-self: self-end;
+}
+
+.image img {
+  height: 380px;
+}
+
+@media (min-width: 576px) {
+  .content h3 {
+    font-size: 2.3rem;
+  }
+
+  .content p {
+    width: 350px;
+  }
+
+  .image img {
+    height: 400x;
+  }
+
+  .image {
+    right: 10px;
+  }
+}
+
+@media (min-width: 768px) {
+  .contentSection {
+    padding-inline: 40px;
+  }
+
+  .content h3 {
+    font-size: 2.7rem;
+  }
+
+  .content p {
+    width: 350px;
+  }
+
+  .image img {
+    height: 420px;
+  }
+
+  .image {
+    bottom: 50px;
+    right: 30px;
+  }
+}
+
+@media (min-width: 992px) {
+  .content h3 {
+    font-size: 3rem;
+  }
+
+  .content p {
+    width: 450px;
+  }
+
+  .image img {
+    height: 420px;
+  }
+
+  .image {
+    right: 50px;
+    bottom: 30px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .contentSection {
+    padding-inline: 100px;
+  }
+  .content h3 {
+    font-size: 3.3rem;
+  }
+
+  .content p {
+    width: 500px;
+  }
+
+  .image img {
+    height: 600px;
+  }
+
+  .image {
+    right: 80px;
+    bottom: 40px;
+  }
 }

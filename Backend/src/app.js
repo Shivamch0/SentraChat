@@ -21,6 +21,6 @@ import userRoute from "./routes/user.routes.js";
 import messageRoute from "./routes/message.routes.js";
 
 app.use("/api/v1/users", userRoute);
-app.use("/api/v/messages", messageRoute);
+app.use("/api/v1/message", messageRoute);
 
 export default app;

@@ -12,6 +12,6 @@ router.route("/logout").post(logoutUser);
 
 router.route("/refreshToken").post(refreshAccessToken);
 
-router.route("/currentUser").get(verifyJWT , getCurrentUser)
+router.route("/current-user").get(verifyJWT , getCurrentUser)
 
 export default router;

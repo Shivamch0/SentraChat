@@ -4,19 +4,19 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
 const sendMessage = asyncHandler( async ( req , res ) => {
-    const { recievedBy , message , messageType} = req.body;
-
+    const { receivedBy , message , messageType} = req.body;
+    console.log(req.body)
     const sendBy = req.user._id;
 
-    if(!recievedBy){
+    if(!receivedBy){
         throw new ApiError(401 , "Reciever id is required...");
     }
 
-    if(!message || !messageType === "text"){
+    if(!message || messageType !== "text"){
         throw new ApiError(401 , "Message cannot be empty...")
     }
 
-    const emotionType = "neutral"
+    let emotionType = "neutral"
 
     if(message){
         const text = message.toLowerCase();
@@ -30,7 +30,7 @@ const sendMessage = asyncHandler( async ( req , res ) => {
 
     const newMessage = await Message.create({
         sendBy,
-        recievedBy,
+        receivedBy,
         message,
         messageType,
         emotionType,
@@ -54,12 +54,12 @@ const getMessage = asyncHandler( async (req , res ) => {
     const messages = await Message.find({
         $or : [
             {sendBy : currentUserId , receivedBy : userId},
-            {sendBy : userId , recievedBy : currentUserId}
+            {sendBy : userId , receivedBy : currentUserId}
         ]
     })
     .sort({createdAt : 1}) // oldest first
     .populate( "sendBy" , "fullName userName avatar")
-    .populate( "recreceivedBy" , "fullName userName avatar" )
+    .populate( "receivedBy" , "fullName userName avatar" )
 
 
     return res.status(200)

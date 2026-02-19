@@ -171,4 +171,8 @@
     right: 80px;
     bottom: 40px;
   }
+
+  .getStarted {
+    padding:  15px 30px;
+  }
 }

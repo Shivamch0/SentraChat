@@ -3,6 +3,7 @@ import { User } from "../models/user.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { Message } from "../models/messages.models.js";
 
 const chats = asyncHandler(async (req, res) => {
   const { targetedUser, chatName, users } = req.body;
@@ -128,8 +129,42 @@ const getChats = asyncHandler(async (req, res) => {
     })
     .sort({updatedAt : -1});
 
+    const chatWithUnread = await Promise.all(
+      chats.map(async (chat) => {
+        const unreadCount = await Message.countDocuments({
+          chat : chat._id,
+          sendBy : {$ne : currentUser},
+          messageStatus  : {$ne : "seen"}
+        });
+
+        return {
+          ...chat.toObject(),
+          unreadCount
+        };
+      })
+    );
+
     return res.status(200)
         .json(new ApiResponse(200 , chats , "Chats fetched successfully..."))
 });
 
-export { chats, groupChat, getChats };
+const markMessagesSeen = asyncHandler(async (req, res) => {
+
+  const { chatId } = req.params;
+  const currentUser = req.user._id;
+
+  await Message.updateMany(
+    {
+      chat: chatId,
+      sendBy: { $ne: currentUser },
+      messageStatus: { $ne: "seen" }
+    },
+    { messageStatus: "seen" }
+  );
+
+  return res.status(200).json(
+    new ApiResponse(200, {}, "Messages marked as seen")
+  );
+});
+
+export { chats, groupChat, getChats , markMessagesSeen };

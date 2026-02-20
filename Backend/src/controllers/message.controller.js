@@ -1,18 +1,18 @@
 import { Message } from "../models/messages.models.js";
+import { Chat } from "../models/chat.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
 const sendMessage = asyncHandler( async ( req , res ) => {
-    const { receivedBy , message , messageType} = req.body;
-    console.log(req.body)
+    const { chatId , message , messageType = "text" } = req.body;
     const sendBy = req.user._id;
 
-    if(!receivedBy){
-        throw new ApiError(401 , "Reciever id is required...");
+    if(!chatId){
+        throw new ApiError(401 , "Chat id is required...");
     }
 
-    if(!message || messageType !== "text"){
+    if(!message){
         throw new ApiError(401 , "Message cannot be empty...")
     }
 

@@ -13,7 +13,8 @@ const chats = asyncHandler(async (req, res) => {
     throw new ApiError(401, "User not authenticated...");
   }
 
-  // Create private chat //
+  if (targetedUser && !chatName && !users) {
+    // Create private chat //
     if (targetedUser.toString() === currentUser.toString()) {
       throw new ApiError(400, "You cannot chat with yourself...");
     }
@@ -49,16 +50,31 @@ const chats = asyncHandler(async (req, res) => {
     return res
       .status(201)
       .json(new ApiResponse(201, fullChat, "Private Chat Created..."));
+  }
 
   throw new ApiError(400, "Invalid chat request...");
 });
 
 const groupChat = asyncHandler(async (req, res) => {
   const { chatName, users } = req.body;
-
   const currentUser = req.user?._id;
+
   if (!currentUser) {
     throw new ApiError(401, "User not authenticated...");
+  }
+
+  // Create group chat //
+
+  if (!chatName || typeof chatName !== "string" || chatName.trim() === "") {
+    throw new ApiError(400, "Group chat name is required...");
+  }
+
+  if (!Array.isArray(users)) {
+    throw new ApiError(400, "Users must be an array...");
+  }
+
+  if (users.includes(currentUser.toString())) {
+    throw new ApiError(400, "Do not include yourself in users list...");
   }
 
   const uniqueUsers = [...new Set(users)];
@@ -67,89 +83,80 @@ const groupChat = asyncHandler(async (req, res) => {
     (id) => id.toString() !== currentUser.toString(),
   );
 
-  // Create group chat //
-  
-    if (typeof chatName !== "string" || chatName.trim() === "") {
-      throw new ApiError(400, "Group chat name is required...");
-    }
+  if (filteredUsers.length < 2) {
+    throw new ApiError(400, "Group chat requires at least 3 members...");
+  }
 
-    if (!Array.isArray(filteredUsers) || filteredUsers.length < 2) {
-      throw new ApiError(400, "Group chat requires at least 3 members...");
-    }
+  const validUsers = await User.find({
+    _id: { $in: filteredUsers },
+  });
+  if (validUsers.length !== filteredUsers.length) {
+    throw new ApiError(400, "One or more users not found...");
+  }
 
-    if (users.includes(currentUser.toString())) {
-      throw new ApiError(400, "Do not include yourself in users list...");
-    }
+  const groupUsers = [...filteredUsers, currentUser];
 
-    const validUsers = await User.find({
-      _id: { $in: filteredUsers },
-    });
-    if (validUsers.length !== filteredUsers.length) {
-      throw new ApiError(400, "One or more users not found...");
-    }
+  const newGroup = await Chat.create({
+    chatName: chatName.trim(),
+    isGroupChat: true,
+    users: groupUsers,
+    groupAdmin: currentUser,
+  });
 
-    const groupUsers = [...filteredUsers, currentUser];
+  const fullGroup = await Chat.findById(newGroup._id)
+    .populate("users", "fullName userName avatar")
+    .populate("groupAdmin", "fullName userName avatar");
 
-    const newGroup = await Chat.create({
-      chatName: chatName.trim(),
-      isGroupChat: true,
-      users: groupUsers,
-      groupAdmin: currentUser,
-    });
+  return res
+    .status(201)
+    .json(new ApiResponse(201, fullGroup, "Group Chat created..."));
 
-    const fullGroup = await Chat.findById(newGroup._id)
-      .populate("users", "fullName userName avatar")
-      .populate("groupAdmin", "fullName userName avatar");
-
-    return res
-      .status(201)
-      .json(new ApiResponse(201, fullGroup, "Group Chat created..."));
-
-  throw new ApiError(400, "Invalid chat request...");
 });
 
 const getChats = asyncHandler(async (req, res) => {
-    const currentUser = req.user?._id;
+  const currentUser = req.user?._id;
 
-    if(!currentUser){
-        throw new ApiError(401 , "User not authenticated...")
-    }
+  if (!currentUser) {
+    throw new ApiError(401, "User not authenticated...");
+  }
 
-    const chats = await Chat.find({
-        users : {$in : [currentUser]}
-    })
-    .populate("users" , "fullName uesrName avatar")
-    .populate("groupAdmin" , "fullName userName avatar")
+  const chats = await Chat.find({
+    users: { $in: [currentUser] },
+  })
+    .populate("users", "fullName userName avatar")
+    .populate("groupAdmin", "fullName userName avatar")
     .populate({
-        path : "latestMessage",
-        populate : {
-            path : "sendBy",
-            select : "fullName userName avatar"
-        }
+      path: "latestMessage",
+      populate: {
+        path: "sendBy",
+        select: "fullName userName avatar",
+      },
     })
-    .sort({updatedAt : -1});
+    .sort({ updatedAt: -1 });
 
-    const chatWithUnread = await Promise.all(
-      chats.map(async (chat) => {
-        const unreadCount = await Message.countDocuments({
-          chat : chat._id,
-          sendBy : {$ne : currentUser},
-          messageStatus  : {$ne : "seen"}
-        });
+  const chatWithUnread = await Promise.all(
+    chats.map(async (chat) => {
+      const unreadCount = await Message.countDocuments({
+        chat: chat._id,
+        sendBy: { $ne: currentUser },
+        messageStatus: { $ne: "seen" },
+      });
 
-        return {
-          ...chat.toObject(),
-          unreadCount
-        };
-      })
+      return {
+        ...chat.toObject(),
+        unreadCount,
+      };
+    }),
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, chatWithUnread, "Chats fetched successfully..."),
     );
-
-    return res.status(200)
-        .json(new ApiResponse(200 , chats , "Chats fetched successfully..."))
 });
 
 const markMessagesSeen = asyncHandler(async (req, res) => {
-
   const { chatId } = req.params;
   const currentUser = req.user._id;
 
@@ -157,14 +164,14 @@ const markMessagesSeen = asyncHandler(async (req, res) => {
     {
       chat: chatId,
       sendBy: { $ne: currentUser },
-      messageStatus: { $ne: "seen" }
+      messageStatus: { $ne: "seen" },
     },
-    { messageStatus: "seen" }
+    { messageStatus: "seen" },
   );
 
-  return res.status(200).json(
-    new ApiResponse(200, {}, "Messages marked as seen")
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Messages marked as seen"));
 });
 
-export { chats, groupChat, getChats , markMessagesSeen };
+export { chats, groupChat, getChats, markMessagesSeen };

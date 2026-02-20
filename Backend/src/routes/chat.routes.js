@@ -1,5 +1,5 @@
 import express from "express";
-import { chats , groupChat } from "../controllers/chat.controller.js";
+import { chats , groupChat , getChats, markMessagesSeen } from "../controllers/chat.controller.js";
 
 const router = express.Router();
 

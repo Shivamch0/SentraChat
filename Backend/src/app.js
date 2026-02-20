@@ -23,6 +23,6 @@ import chatRoute from "./routes/chat.routes.js"
 
 app.use("/api/v1/users", userRoute);
 app.use("/api/v1/message", messageRoute);
-app.use("api/v1/chat" , chatRoute)
+app.use("/api/v1/chat" , chatRoute)
 
 export default app;

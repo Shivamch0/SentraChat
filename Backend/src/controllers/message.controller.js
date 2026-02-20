@@ -27,64 +27,94 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   const newMessage = await Message.create({
     sendBy,
-    chat  : chatId,
+    chat: chatId,
     message,
     messageType,
     emotionType,
     messageStatus: "sent",
   });
 
-  await Chat.findByIdAndUpdate(chatId , {
-    latestMessage : newMessage._id
+  await Chat.findByIdAndUpdate(chatId, {
+    latestMessage: newMessage._id,
   });
 
   const fullMessage = await Message.findById(newMessage._id)
-    .populate("sendBy" , "fullName userName avatar")
-    .populate("chat")
+    .populate("sendBy", "fullName userName avatar")
+    .populate({
+      path: "chat",
+      populate: {
+        path: "users",
+        select: "fullName userName avatar",
+      },
+    });
+
+  const io = req.app.get("io");
+  io.to(chatId).emit("message received", fullMessage);
+
+  await Message.findByIdAndUpdate(fullMessage._id, {
+    messageStatus: "delivered",
+  });
+
+  io.to(chatId).emit("message delivered", {
+    messageId: fullMessage._id,
+  });
+
+  fullMessage.chat.users.forEach((user) => {
+    if (user._id.toString() !== sendBy.toString()) {
+      io.to(user._id.toString()).emit("new notification", {
+        chatId,
+        message: fullMessage.message,
+        sender: fullMessage.sendBy,
+      });
+    }
+  });
 
   return res
-    .status(200)
-    .json(new ApiResponse(200, fullMessage, "Message sent successfully..."));
+    .status(201)
+    .json(new ApiResponse(201, fullMessage, "Message sent successfully..."));
 });
 
 const getMessage = asyncHandler(async (req, res) => {
-  const { chatId } = req.params; 
+  const { chatId } = req.params;
 
   if (!chatId) {
     throw new ApiError(401, "User id is required...");
   }
 
-   /*
+  /*
       ADDED: pagination query params
       Example: ?page=1&limit=20
     */
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
 
-    /*
+  /*
        ADDED: calculate how many docs to skip
     */
-    const skip = (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
-
-  const messages = await Message.find({chat : chatId})
-    .sort({ createdAt: 1 })// oldest first
+  const messages = await Message.find({ chat: chatId })
+    .sort({ createdAt: 1 }) // oldest first
     .skip(skip)
     .limit(limit)
     .populate("sendBy", "fullName userName avatar")
     .populate("chat");
 
-    const totalMessages = await Message.countDocuments({ chat: chatId })
+  const totalMessages = await Message.countDocuments({ chat: chatId });
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {
-            messages: messages.reverse(), // ✅ ADDED: return oldest → newest in UI
-            page,
-            limit,
-            totalMessages,
-            totalPages: Math.ceil(totalMessages / limit)
-        }, "Messages fetched successfully..."));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        messages: messages.reverse(), // ✅ ADDED: return oldest → newest in UI
+        page,
+        limit,
+        totalMessages,
+        totalPages: Math.ceil(totalMessages / limit),
+      },
+      "Messages fetched successfully...",
+    ),
+  );
 });
 
 export { sendMessage, getMessage };

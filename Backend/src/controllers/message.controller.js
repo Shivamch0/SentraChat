@@ -3,6 +3,7 @@ import { Chat } from "../models/chat.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { analyzeEmotion } from "../services/emotion.service.js";
 
 const sendMessage = asyncHandler(async (req, res) => {
   const { chatId, message, messageType = "text" } = req.body;
@@ -16,7 +17,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Message cannot be empty...");
   }
 
-  let emotionType = "neutral";
+  let emotionType = await analyzeEmotion(message);
 
   const text = message.toLowerCase();
   if (text.includes("happy") || text.includes("love")) {

@@ -46,8 +46,8 @@ const sendMessage = asyncHandler(async (req, res) => {
       populate: {
         path: "users",
         select: "fullName userName avatar",
-      },
-    });
+      },  
+    });  
 
   const io = req.app.get("io");
   io.to(chatId).emit("message received", fullMessage);

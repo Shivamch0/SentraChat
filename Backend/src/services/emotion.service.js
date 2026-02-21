@@ -1,4 +1,8 @@
 import Openai from "openai";
+import dotenv from "dotenv"
+dotenv.config({
+    path : ".env"
+})
     
 const openai = new Openai({
     apiKey : process.env.OPENAI_API_KEY
@@ -22,6 +26,6 @@ export const analyzeEmotion = async (text) => {
         return response.choices[0].message.content.trim().toLocaleLowerCase()
     } catch (error) {
         console.log("Emotion api failed : " , error.message);
-        return " neutral "
+        return "neutral"
     }
 }

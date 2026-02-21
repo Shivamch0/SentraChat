@@ -96,7 +96,7 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
     messageType,
     emotionType,
     messageStatus: "sent",
-  })
+  });
 
   await Chat.findByIdAndUpdate(chatId, {
     latestMessage: newMessage._id,
@@ -126,7 +126,6 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(new ApiResponse(201, fullMessage, "Media sent successfully"));
-
 });
 
 const getMessage = asyncHandler(async (req, res) => {
@@ -172,24 +171,64 @@ const getMessage = asyncHandler(async (req, res) => {
   );
 });
 
-const editMessage = asyncHandler(async (req , res) => {
+const editMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
   const { newText } = req.body;
 
-  if(!newText){
-    throw new ApiError(400 , "New message text required...")
+  if (!newText) {
+    throw new ApiError(400, "New message text required...");
   }
 
   const message = await Message.findById(messageId);
-  if(!message){
-    throw new ApiError(400 , "Message not found...")
+  if (!message) {
+    throw new ApiError(400, "Message not found...");
   }
- // work to do///
 
+  if (message.sendBy.toString() !== req.user._id.toString()) {
+    throw new ApiError(400, "Not allowed to edit message...");
+  }
+
+  message.message = newText;
+  message.editedAt = new Date();
+
+  await message.save();
+
+  const io = req.app.get("io");
+  io.to(message.chat.toString()).emit("message updated", message);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, message, "Message edited successfully"));
 });
 
-const deleteMessage = asyncHandler(async (req , res) => {
+const deleteMessage = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
 
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    throw new ApiError(404, "Message not found");
+  }
+
+  if (message.sendBy.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not allowed to delete this message");
+  }
+
+  message.isDeleted = true;
+  message.message = "This message was deleted";
+
+  await message.save();
+
+  const io = req.app.get("io");
+  io.to(message.chat.toString()).emit("message updated", message);
+
+  return res.status(200).json(new ApiResponse(200, {}, "Message deleted"));
 });
 
-export { sendMessage, getMessage, sendMediaMessage , editMessage , deleteMessage };
+export {
+  sendMessage,
+  getMessage,
+  sendMediaMessage,
+  editMessage,
+  deleteMessage,
+};

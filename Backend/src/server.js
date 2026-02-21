@@ -41,16 +41,16 @@ io.on("connection", (socket) => {
 
   })
 
-  socket.on("Join Chat", (chatId) => {
+  socket.on("join chat", (chatId) => {
     socket.join(chatId);
   });
 
    socket.on("typing", (chatId) => {
-    socket.to(chatId).emit("typing");
+    socket.to(chatId).emit("typing" , socket.userId);
   });
 
   socket.on("stop typing", (chatId) => {
-    socket.io(chatId).emit("stop typing");
+    socket.to(chatId).emit("stop typing" , socket.userId);
   });
 
   socket.on("disconnect", async () => {

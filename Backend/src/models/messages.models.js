@@ -21,6 +21,10 @@ const messageSchema = new mongoose.Schema(
     caption: {
       type: String,
     },
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
+    },
     messageType: {
       type: String,
       enum: ["text", "image", "file", "emoji", "audio"],
@@ -31,6 +35,20 @@ const messageSchema = new mongoose.Schema(
       enum: ["positive", "negative", "neutral"],
       default: "neutral",
     },
+    reactions: [
+      {
+        emoji: {
+          type: String,
+          required: true,
+        },
+        users: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+        ],
+      },
+    ],
     messageStatus: {
       type: String,
       enum: ["sent", "seen", "delivered"],
@@ -47,5 +65,7 @@ const messageSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+messageSchema.index({ message: "text", caption: "text" });
 
 export const Message = mongoose.model("Message", messageSchema);

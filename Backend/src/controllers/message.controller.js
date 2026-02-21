@@ -172,4 +172,24 @@ const getMessage = asyncHandler(async (req, res) => {
   );
 });
 
-export { sendMessage, getMessage, sendMediaMessage };
+const editMessage = asyncHandler(async (req , res) => {
+  const { messageId } = req.params;
+  const { newText } = req.body;
+
+  if(!newText){
+    throw new ApiError(400 , "New message text required...")
+  }
+
+  const message = await Message.findById(messageId);
+  if(!message){
+    throw new ApiError(400 , "Message not found...")
+  }
+ // work to do///
+
+});
+
+const deleteMessage = asyncHandler(async (req , res) => {
+
+});
+
+export { sendMessage, getMessage, sendMediaMessage , editMessage , deleteMessage };

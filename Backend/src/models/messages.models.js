@@ -11,9 +11,14 @@ const messageSchema = new mongoose.Schema ({
         ref : "Chat",
         required : true
     },
+    // text message Or Media URL
     message : {
         type : String,
         required : true
+    },
+    // optional caption for media (text + emoji allowed)
+    caption : {
+        type : String,
     },
     messageType : {
         type : String,

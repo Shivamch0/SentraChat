@@ -6,7 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { analyzeEmotion } from "../services/emotion.service.js";
 
 const sendMessage = asyncHandler(async (req, res) => {
-  const { chatId, message, messageType = "text" } = req.body;
+  const { chatId, message } = req.body;
   const sendBy = req.user._id;
 
   if (!chatId) {
@@ -19,18 +19,11 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   let emotionType = await analyzeEmotion(message);
 
-  const text = message.toLowerCase();
-  if (text.includes("happy") || text.includes("love")) {
-    emotionType = "positive";
-  } else if (text.includes("angry") || text.includes("sad")) {
-    emotionType = "negative";
-  }
-
   const newMessage = await Message.create({
     sendBy,
     chat: chatId,
     message,
-    messageType,
+    messageType: "text",
     emotionType,
     messageStatus: "sent",
   });
@@ -46,8 +39,8 @@ const sendMessage = asyncHandler(async (req, res) => {
       populate: {
         path: "users",
         select: "fullName userName avatar",
-      },  
-    });  
+      },
+    });
 
   const io = req.app.get("io");
   io.to(chatId).emit("message received", fullMessage);
@@ -73,6 +66,67 @@ const sendMessage = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(new ApiResponse(201, fullMessage, "Message sent successfully..."));
+});
+
+const sendMediaMessage = asyncHandler(async (req, res) => {
+  const { chatId, messageType, caption } = req.body;
+
+  if (!chatId) {
+    throw new ApiError(400, "Chat id required...");
+  }
+
+  if (!eq.file) {
+    throw new ApiError(400, "Media file required...");
+  }
+
+  const mediaUrl = `${req.protocol}://${req.get("host")}/${req.file.path}`;
+
+  let emotionType = "neutral";
+  if (caption) {
+    await Chat.findByIdAndUpdate(chatId, {
+      latestMessage: newMessage._id,
+    });
+  }
+
+  const newMessage = await Message.create({
+    sendBy,
+    chat: chatId,
+    message: mediaUrl,
+    caption: caption || "",
+    messageType,
+    emotionType,
+    messageStatus: "sent",
+  })
+
+  await Chat.findByIdAndUpdate(chatId, {
+    latestMessage: newMessage._id,
+  });
+
+  const fullMessage = await Message.findById(newMessage._id)
+    .populate("sendBy", "fullName userName avatar")
+    .populate({
+      path: "chat",
+      populate: {
+        path: "users",
+        select: "fullName userName avatar",
+      },
+    });
+
+  const io = req.app.get("io");
+  io.to(chatId).emit("message received", fullMessage);
+
+  await Message.findByIdAndUpdate(fullMessage._id, {
+    messageStatus: "delivered",
+  });
+
+  io.to(chatId).emit("message delivered", {
+    messageId: fullMessage._id,
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, fullMessage, "Media sent successfully"));
+
 });
 
 const getMessage = asyncHandler(async (req, res) => {
@@ -118,4 +172,4 @@ const getMessage = asyncHandler(async (req, res) => {
   );
 });
 
-export { sendMessage, getMessage };
+export { sendMessage, getMessage, sendMediaMessage };

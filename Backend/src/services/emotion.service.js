@@ -1,31 +1,38 @@
-import Openai from "openai";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
+import fetch from "node-fetch";
 dotenv.config({
-    path : ".env"
-})
-    
-const openai = new Openai({
-    apiKey : process.env.OPENAI_API_KEY
+  path: ".env",
 });
 
+const HUGGING_FACE_TOKEN = process.env.HUGGING_FACE_API_KEY;
+
 export const analyzeEmotion = async (text) => {
-    try {
-        const response = await openai.chat.completions.create({
-            model : "gpt-4o-mini",
-            messages :[ {
-                role : "system",
-                content : "Classify the emotion of this message as positive, negative, or neutral. Reply with only one word."
-            },
-            {
-                role : "user",
-                content : text
-            }
-        ],
-        temperature : 0
-        });
-        return response.choices[0].message.content.trim().toLocaleLowerCase()
-    } catch (error) {
-        console.log("Emotion api failed : " , error.message);
-        return "neutral"
+  try {
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment",
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${HUGGING_FACE_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ inputs: text }),
+      },
+    );
+
+    const result = await response.json();
+
+    if (!Array.isArray(result) || !result[0]) {
+      return "neutral";
     }
-}
+
+    const label = result[0].label.toLowerCase();
+
+    if (label.includes("positive")) return "positive";
+    if (label.includes("negative")) return "negative";
+    return "neutral";
+  } catch (error) {
+    console.error("HuggingFace error:", err);
+    return "neutral";
+  }
+};

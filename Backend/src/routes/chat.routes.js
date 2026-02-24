@@ -12,4 +12,4 @@ router.route("/getChat").get( verifyJWT , getChats);
 
 router.route("/mark-seen/:chatId").patch(verifyJWT, markMessagesSeen);
 
-export default router;
+export default router; 

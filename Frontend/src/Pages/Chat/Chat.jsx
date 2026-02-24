@@ -1,13 +1,66 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import style from "./Chat.module.css";
 import SideBar from "../../Components/Sidebar/SideBar";
 import sarah from "../../assets/sarah.png";
+import { fetchMessages, sendMessageApi } from "../../api/message.api.js";
+import socket from "../../socket.js";
+import { getCurrentUser } from "../../api/auth.api.js";
 
 function Chat() {
+  const [messages, setMessages] = useState([]);
+  const [activeChat, setActiveChat] = useState(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [currentUserId , setCurrentUserId] = useState([]);
+
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const loadMessages = async () => {
+      const res = await fetchMessages(activeChat);
+      setMessages(res.data.messages);
+
+      socket.emit("join chat", activeChat);
+    };
+
+    loadMessages();
+  }, [activeChat]);
+
+  useEffect(() => {
+    socket.on("message received", (msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    return () => socket.off("message received");
+  }, []);
+
+  useEffect(() => {
+    const chatBox = document.querySelector(`.${style.chat}`);
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  }, [messages]);
+
+  useEffect(() =>{
+    const loadUser = async () =>{
+      const res = await getCurrentUser();
+      setCurrentUserId(res.data.user._id)
+    };
+    loadUser();
+  } , []);
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !activeChat) return;
+
+    try {
+      await sendMessageApi(activeChat, newMessage);
+      setNewMessage("");
+    } catch (error) {
+      console.log("Failed to send messages..." , error)
+    }
+  };
+
   return (
     <>
       <div className={style.chatContainer}>
-        <SideBar />
+        <SideBar setActiveChat={setActiveChat} />
         <div className={style.chatPannel}>
           <section className={style.topSection}>
             <div className={style.userInfo}>
@@ -20,8 +73,8 @@ function Chat() {
             </div>
 
             <div className={style.icons}>
-              <i class="fa-brands fa-sistrix"></i>
-              <i class="fa-solid fa-user"></i>
+              <i className="fa-brands fa-sistrix"></i>
+              <i className="fa-solid fa-user"></i>
             </div>
           </section>
 
@@ -30,32 +83,18 @@ function Chat() {
               <input type="text" placeholder="Search" />
 
               <div className={style.chat}>
-                <div className={style.day}>
-                  <p>Today 1:23</p>
-                </div>
-
-                <div className={style.senderMessage}>
-                  <p>Hey John! How are you?</p>
-                </div>
-
-                <div className={style.recieverMessage}>
-                  <p>Hi! I'm doing great, thanks for asking. How about you?</p>
-                </div>
-
-                <div className={style.senderMessage}>
-                  <p>
-                    Not too bad, just been busy with work. Managed to finish
-                    that big project
-                  </p>
-                </div>
-
-                <div className={style.recieverMessage}>
-                  <p>Thats great to hear! Lets catch up soon.</p>
-                </div>
-
-                <div className={style.senderMessage}>
-                  <p>John is typing...</p>
-                </div>
+                {[...messages].map((msg) => (
+                  <div
+                    key={msg._id}
+                    className={
+                      msg.sendBy._id === currentUserId
+                        ? style.senderMessage
+                        : style.recieverMessage
+                    }
+                  >
+                    <p>{msg.message}</p>
+                  </div>
+                ))}
               </div>
             </section>
           </section>
@@ -65,11 +104,16 @@ function Chat() {
               <div className={style.messageBar}>
                 <i className="fa-solid fa-plus"></i>
 
-                <input type="text" placeholder="Type a message" />
+                <input
+                  placeholder="Type a message"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && sendMessage()}
+                />
 
                 <i className="fa-regular fa-face-smile"></i>
               </div>
-              <button>Send</button>
+              <button onClick={sendMessage}>Send</button>
             </div>
           </section>
         </div>

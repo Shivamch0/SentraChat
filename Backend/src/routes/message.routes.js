@@ -9,7 +9,7 @@ import {
   searchMessages,
   getNotifications
 } from "../controllers/message.controller.js";
-
+import { upload  } from "../middlewares/upload.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();

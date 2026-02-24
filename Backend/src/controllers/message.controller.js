@@ -197,7 +197,7 @@ const getMessage = asyncHandler(async (req, res) => {
     new ApiResponse(
       200,
       {
-        messages: messages.reverse(), // ✅ ADDED: return oldest → newest in UI
+        messages,
         page,
         limit,
         totalMessages,

@@ -4,6 +4,7 @@ import purpleLike from '../../assets/like2.png';
 import { Link , useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { signUpSchema } from '../../validations/signUpSchema';
+import { registerUser } from "../../api/auth.api.js"
 
 function SignUp() {
 
@@ -16,8 +17,14 @@ function SignUp() {
       password : ""
     },
     validationSchema : signUpSchema,
-    onSubmit : (values) => {
-      navigate("/signUp")
+    onSubmit : async (values) => {
+      try {
+        console.log(values)
+        await registerUser(values);
+        navigate("/login")
+      } catch (error) {
+         alert(error.response?.data?.message);
+      }
     }
   })
 
@@ -33,10 +40,10 @@ function SignUp() {
                 <h2>Create Account</h2>
                 <p className={style.signUpPara}> Sign up to get started!</p>
 
-                <input type="text"  placeholder="Fullname" name='name' onChange={handleChange} value={values.fullName}/>
+                <input type="text"  placeholder="Fullname" name='fullName' onChange={handleChange} value={values.fullName}/>
                 {errors.fullName && <p>{errors.fullName}</p>}
 
-                <input type="text"  placeholder="Username" name='name' onChange={handleChange} value={values.userName}/>
+                <input type="text"  placeholder="Username" name='userName' onChange={handleChange} value={values.userName}/>
                 {errors.userName && <p>{errors.userName}</p>}
 
                 <input type="email" placeholder='Email' name='email' onChange={handleChange} value={values.email}/>

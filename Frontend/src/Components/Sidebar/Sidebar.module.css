@@ -28,6 +28,7 @@
 .chatSection input {
   padding: 10px 20px;
   border-radius: 25px;
+  margin-bottom: 10px;
   outline: none;
   border: none;
 }
@@ -60,6 +61,43 @@
   height: 50px;
   width: 50px;
   border-radius: 50%;
+}
+
+.newChatBtn {
+  padding: 10px;
+  margin: 10px 30px 0 30px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.newChatBtn:hover {
+  background: #4338ca;
+}
+
+.avatarWrapper {
+  position: relative;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  border: 2px solid white;
+}
+
+.online {
+  background: #22c55e;
+}
+
+.offline {
+  background: #9ca3af;
 }
 
 @media (min-width: 576px) {

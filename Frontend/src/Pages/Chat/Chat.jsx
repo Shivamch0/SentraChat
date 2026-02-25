@@ -1,16 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import style from "./Chat.module.css";
+
 import SideBar from "../../Components/Sidebar/SideBar";
-import sarah from "../../assets/sarah.png";
+
 import { fetchMessages, sendMessageApi } from "../../api/message.api.js";
-import socket from "../../socket.js";
 import { getCurrentUser } from "../../api/auth.api.js";
+import { markSeen } from "../../api/chat.api.js";
+
+import  socket  from "../../socket.js";
 
 function Chat() {
-  const [messages, setMessages] = useState([]);
+
   const [activeChat, setActiveChat] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [currentUserId , setCurrentUserId] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [typingUser, setTypingUser] = useState(null);
+
+  const chatEndRef = useRef(null);
+
+  /* =========================
+     LOAD LOGGED USER
+  ========================== */
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const res = await getCurrentUser();
+      setCurrentUserId(res.data.user._id);
+    };
+
+    loadUser();
+  }, []);
 
   useEffect(() => {
     if (!activeChat) return;
@@ -19,32 +39,42 @@ function Chat() {
       const res = await fetchMessages(activeChat);
       setMessages(res.data.messages);
 
+      // Join socket room for this chat
       socket.emit("join chat", activeChat);
+
+      // Mark messages as seen
+      markSeen(activeChat);
     };
 
     loadMessages();
   }, [activeChat]);
 
   useEffect(() => {
-    socket.on("message received", (msg) => {
-      setMessages((prev) => [...prev, msg]);
+    socket.on("message received", msg => {
+      setMessages(prev => [...prev, msg]);
     });
 
     return () => socket.off("message received");
   }, []);
 
   useEffect(() => {
-    const chatBox = document.querySelector(`.${style.chat}`);
-    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-  }, [messages]);
+    socket.on("typing", userId => {
+      setTypingUser(userId);
+    });
 
-  useEffect(() =>{
-    const loadUser = async () =>{
-      const res = await getCurrentUser();
-      setCurrentUserId(res.data.user._id)
+    socket.on("stop typing", () => {
+      setTypingUser(null);
+    });
+
+    return () => {
+      socket.off("typing");
+      socket.off("stop typing");
     };
-    loadUser();
-  } , []);
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !activeChat) return;
@@ -52,73 +82,84 @@ function Chat() {
     try {
       await sendMessageApi(activeChat, newMessage);
       setNewMessage("");
-    } catch (error) {
-      console.log("Failed to send messages..." , error)
+      socket.emit("stop typing", activeChat);
+    } catch (err) {
+      console.log("Send failed", err);
     }
   };
 
   return (
-    <>
-      <div className={style.chatContainer}>
-        <SideBar setActiveChat={setActiveChat} />
-        <div className={style.chatPannel}>
-          <section className={style.topSection}>
-            <div className={style.userInfo}>
-              <img src={sarah} alt="" />
+    <div className={style.chatContainer}>
 
-              <div className={style.userDetails}>
-                <h4>Sarah</h4>
-                <p>online</p>
+      <SideBar setActiveChat={setActiveChat} />
+
+      <div className={style.chatPannel}>
+
+       
+        <section className={style.topSection}>
+          <h4>Chat</h4>
+        </section>
+
+      
+        <section className={style.middleSection}>
+          <div className={style.chat}>
+
+            {messages.map(msg => (
+              <div
+                key={msg._id}
+                className={
+                  msg.sendBy._id === currentUserId
+                    ? style.senderMessage   
+                    : style.recieverMessage  
+                }
+              >
+                <p>{msg.message}</p>
+
+               
+                {msg.sendBy._id === currentUserId && (
+                  <span style={{ fontSize: "10px", marginLeft: "5px" }}>
+                    {msg.messageStatus === "seen" ? "✔✔" : "✔"}
+                  </span>
+                )}
               </div>
+            ))}
+
+            {typingUser && (
+              <p style={{ fontSize: "12px", color: "gray" }}>
+                Typing...
+              </p>
+            )}
+
+            
+            <div ref={chatEndRef} />
+
+          </div>
+        </section>
+
+       
+        <section className={style.bottomSection}>
+          <div className={style.messageContainer}>
+
+            <div className={style.messageBar}>
+              <input
+                placeholder="Type a message"
+                value={newMessage}
+                onChange={e => {
+                  setNewMessage(e.target.value);
+                  socket.emit("typing", activeChat);
+                }}
+                onBlur={() => socket.emit("stop typing", activeChat)}
+                onKeyDown={e => e.key === "Enter" && sendMessage()}
+              />
             </div>
 
-            <div className={style.icons}>
-              <i className="fa-brands fa-sistrix"></i>
-              <i className="fa-solid fa-user"></i>
-            </div>
-          </section>
+            <button onClick={sendMessage}>Send</button>
 
-          <section className={style.middleSection}>
-            <section className={style.chatSection}>
-              <input type="text" placeholder="Search" />
+          </div>
+        </section>
 
-              <div className={style.chat}>
-                {[...messages].map((msg) => (
-                  <div
-                    key={msg._id}
-                    className={
-                      msg.sendBy._id === currentUserId
-                        ? style.senderMessage
-                        : style.recieverMessage
-                    }
-                  >
-                    <p>{msg.message}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </section>
-
-          <section className={style.bottomSection}>
-            <div className={style.messageContainer}>
-              <div className={style.messageBar}>
-                <i className="fa-solid fa-plus"></i>
-
-                <input
-                  placeholder="Type a message"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && sendMessage()}
-                />
-
-                <i className="fa-regular fa-face-smile"></i>
-              </div>
-              <button onClick={sendMessage}>Send</button>
-            </div>
-          </section>
-        </div>
       </div>
-    </>
+    </div>
   );
 }
 

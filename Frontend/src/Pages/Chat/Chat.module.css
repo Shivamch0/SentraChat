@@ -75,6 +75,29 @@
   font-size: 12px;
 }
 
+.reactionPicker {
+  display: none;
+  gap: 6px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.senderMessage:hover .reactionPicker,
+.recieverMessage:hover .reactionPicker {
+  display: flex;
+}
+
+.reactionBubble {
+  margin-top: 4px;
+  background: white;
+  border-radius: 12px;
+  padding: 2px 6px;
+  display: inline-flex;
+  gap: 6px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
 /* .senderMessage {
   align-self: flex-end;
   width: 100%;

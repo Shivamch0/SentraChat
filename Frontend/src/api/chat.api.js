@@ -16,7 +16,7 @@ const fetchChats = async () =>{
 }
 
 const markSeen = async (chatId) =>{
-    const res = await api.post(`/chat/mark-seen/${chatId}`);
+    const res = await api.patch(`/chat/mark-seen/${chatId}`);
     return res.data
 }
 

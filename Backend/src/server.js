@@ -23,52 +23,54 @@ const io = new Server(server, {
 app.set("io", io);
 
 io.on("connection", (socket) => {
-
-  socket.on("setup" , async (userId) => {
+  socket.on("setup", async (userId) => {
     socket.userId = userId;
     socket.join(userId);
 
-    await User.findByIdAndUpdate(userId , {
-        isOnline : true,
-        lastSeen : null
+    await User.findByIdAndUpdate(userId, {
+      isOnline: true,
+      lastSeen: null,
     });
 
     socket.broadcast.emit("user status changed", {
       userId,
       isOnline: true,
     });
-
-  })
+  });
 
   socket.on("join chat", (chatId) => {
     socket.join(chatId);
   });
 
-   socket.on("typing", (chatId) => {
-    socket.to(chatId).emit("typing" , socket.userId);
+  socket.on("typing", (chatId) => {
+    socket.to(chatId).emit("typing", socket.userId);
   });
 
   socket.on("stop typing", (chatId) => {
-    socket.to(chatId).emit("stop typing" , socket.userId);
+    socket.to(chatId).emit("stop typing", socket.userId);
+  });
+
+  socket.on("leave chat", (chatId) => {
+    socket.leave(chatId);
   });
 
   socket.on("disconnect", async () => {
     const userId = socket.userId;
 
-    if(!userId) return;
+    if (!userId) return;
 
-    await User.findByIdAndUpdate(userId , {
-        isOnline : false,
-        lastSeen : new Date()
+    await User.findByIdAndUpdate(userId, {
+      isOnline: false,
+      lastSeen: new Date(),
     });
 
-    socket.broadcast.emit("user status changed" , {
-        userId,
-        isOnline : false,
-        lastSeen : new Date()
-    })
+    socket.broadcast.emit("user status changed", {
+      userId,
+      isOnline: false,
+      lastSeen: new Date(),
+    });
 
-    console.log("User Disconnected : " , socket.id)
+    console.log("User Disconnected : ", socket.id);
   });
 });
 

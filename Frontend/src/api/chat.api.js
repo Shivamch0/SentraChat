@@ -12,6 +12,7 @@ const createGroupChat = async (chatName , users) =>{
 
 const fetchChats = async () =>{
     const res = await api.get("/chat/getChat");
+    console.log(res.data);
     return res.data
 }
 

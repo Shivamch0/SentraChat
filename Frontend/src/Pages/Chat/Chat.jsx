@@ -14,6 +14,9 @@ function Chat() {
   const [newMessage, setNewMessage] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const chatEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -31,9 +34,29 @@ function Chat() {
   useEffect(() => {
     if (!activeChat) return;
 
-    const loadMessages = async () => {
-      const res = await fetchMessages(activeChat);
-      setMessages(res.data.messages);
+    setMessages([]);
+    setPage(1);
+    setHasMore(true);
+
+    const loadMessages = async (pageToLoad = 1, isScroll = false) => {
+      if (!activeChat || loadingMore) return;
+
+      setLoadingMore(true);
+
+      const res = await fetchMessages(activeChat , pageToLoad);
+
+
+      
+      setMessages((prev) => {
+        const map = new Map();
+
+        res.data.messages.forEach((m) => map.set(m._id, m));
+        prev.forEach((m) => map.set(m._id, m));
+
+        return Array.from(map.values()).sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+        );
+      });
 
       socket.emit("join chat", activeChat);
       markSeen(activeChat);
@@ -48,11 +71,16 @@ function Chat() {
 
   useEffect(() => {
     socket.on("message received", (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      if (msg.chat._id === activeChat) {
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+      }
     });
 
     return () => socket.off("message received");
-  }, []);
+  }, [activeChat]);
 
   useEffect(() => {
     socket.on("typing", () => {
@@ -158,7 +186,7 @@ function Chat() {
                     ))}
                   </div>
                 )}
-                
+
                 {msg.sendBy._id === currentUserId && (
                   <span style={{ fontSize: "10px", marginLeft: "5px" }}>
                     {msg.messageStatus === "seen" ? "✔✔" : "✔"}

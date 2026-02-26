@@ -6,7 +6,7 @@ const storage = multer.diskStorage({
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueName + path.extname(file.originalname));
   },
 });
@@ -23,7 +23,7 @@ const fileFilter = (req, file, cb) => {
     "audio/wav",
   ];
 
-  if (!allowed_Types.includes(file.mimeType)) {
+  if (!allowed_Types.includes(file.mimetype)) {
     return cb(new Error("Unsupported File Type"), false);
   }
   cb(null, true);

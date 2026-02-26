@@ -32,7 +32,7 @@ export const analyzeEmotion = async (text) => {
     if (label.includes("negative")) return "negative";
     return "neutral";
   } catch (error) {
-    console.error("HuggingFace error:", err);
+    console.error("HuggingFace error:", error);
     return "neutral";
   }
 };

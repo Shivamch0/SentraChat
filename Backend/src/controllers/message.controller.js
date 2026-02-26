@@ -37,9 +37,26 @@ const sendMessage = asyncHandler(async (req, res) => {
     messageStatus: "sent",
   });
 
+  const io = req.app.get("io");
+
   await Chat.findByIdAndUpdate(chatId, {
     latestMessage: newMessage._id,
+    updatedAt: new Date(),
   });
+
+  const updatedChat = await Chat.findById(chatId)
+    .populate("users", "fullName userName avatar")
+    .populate({
+      path: "latestMessage",
+      populate: {
+        path: "sendBy",
+        select: "fullName userName avatar",
+      },
+    });
+
+  for (const user of updatedChat.users) {
+    io.to(user._id.toString()).emit("chat updated", updatedChat);
+  }
 
   const fullMessage = await Message.findById(newMessage._id)
     .populate("sendBy", "fullName userName avatar")
@@ -58,7 +75,6 @@ const sendMessage = asyncHandler(async (req, res) => {
       },
     });
 
-  const io = req.app.get("io");
   io.to(chatId).emit("message received", fullMessage);
 
   await Message.findByIdAndUpdate(fullMessage._id, {

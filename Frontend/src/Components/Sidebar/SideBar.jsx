@@ -3,11 +3,13 @@ import Logo from "../../assets/white logo.png";
 import style from "./SideBar.module.css";
 import { createPrivateChat, fetchChats } from "../../api/chat.api.js";
 import socket from "../../socket.js";
+import { getCurrentUser } from "../../api/auth.api.js";
 
 function SideBar({ setActiveChat }) {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [onlineMap, setOnlineMap] = useState({});
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
     const loadChats = async () => {
@@ -37,14 +39,70 @@ function SideBar({ setActiveChat }) {
   }, []);
 
   useEffect(() => {
-    socket.on("User Status Changed", ({ userId, isOnline }) => {
+  const loadUser = async () => {
+    const res = await getCurrentUser();
+    setCurrentUserId(res.data.user._id);
+  };
+  loadUser();
+}, []);
+
+  useEffect(() => {
+    socket.on("user status changed", ({ userId, isOnline }) => {
       setOnlineMap((prev) => ({
         ...prev,
         [userId]: isOnline,
       }));
     });
-    return () => socket.off("user status changed...");
+    return () => socket.off("user status changed");
   }, []);
+
+  useEffect(() => {
+    socket.on("message received", (newMsg) => {
+      setChats((prev) => {
+        const updated = prev.map((chat) =>
+          chat._id === newMsg.chat._id
+            ? { ...chat, latestMessage: newMsg }
+            : chat,
+        );
+
+        const activeChat = updated.find((c) => c._id === newMsg.chat._id);
+
+        return [
+          activeChat,
+          ...updated.filter((c) => c._id !== newMsg.chat._id),
+        ];
+      });
+    });
+
+    return () => socket.off("message received");
+  }, []);
+
+  useEffect(() => {
+  socket.on("chat updated", (updatedChat) => {
+    setChats(prev => {
+      const exists = prev.find(c => c._id === updatedChat._id);
+
+      let newChats;
+
+      if (exists) {
+        newChats = prev.map(c =>
+          c._id === updatedChat._id ? updatedChat : c
+        );
+      } else {
+        newChats = [updatedChat, ...prev];
+      }
+
+      const active = newChats.find(c => c._id === updatedChat._id);
+
+      return [
+        active,
+        ...newChats.filter(c => c._id !== updatedChat._id),
+      ];
+    });
+  });
+
+  return () => socket.off("chat updated");
+}, []);
 
   const handleNewChat = async () => {
     const userId = prompt("Enter user ID to start chat:");
@@ -79,7 +137,7 @@ function SideBar({ setActiveChat }) {
             chats.map((chat) => {
               const otherUser =
                 !chat.isGroupChat && Array.isArray(chat.users)
-                  ? chat.users.find((u) => !u.isOnline) || chat.users[0]
+                  ? chat.users.find((u) => u._id !== currentUserId) 
                   : null;
 
               return (

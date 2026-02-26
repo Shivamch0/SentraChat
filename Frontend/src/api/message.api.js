@@ -1,7 +1,8 @@
 import api from "./client";
 
-export const fetchMessages = async (chatId) => {
-  const res = await api.get(`/message/${chatId}`);
+export const fetchMessages = async (chatId , page = 1) => {
+  const res = await api.get(`/message/${chatId}?page=${page}&limit=20`);
+  
   return res.data;
 };
 

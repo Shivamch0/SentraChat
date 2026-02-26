@@ -2,7 +2,7 @@ import api from "./client";
 
 const registerUser = async (data) => {
     const res = await api.post("/users/register" , data);
-    res.data;
+    return res.data;
 }
 
 const loginUser = async (data) => {

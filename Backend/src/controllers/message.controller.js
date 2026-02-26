@@ -194,7 +194,7 @@ const getMessage = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const messages = await Message.find({ chat: chatId })
-    .sort({ createdAt: 1 }) // oldest first
+    .sort({ createdAt: -1 }) // oldest first
     .skip(skip)
     .limit(limit)
     .populate("sendBy", "fullName userName avatar")

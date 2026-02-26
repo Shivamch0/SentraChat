@@ -1,11 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import style from "./Chat.module.css";
 import SideBar from "../../Components/Sidebar/SideBar";
-import { fetchMessages, sendMessageApi } from "../../api/message.api.js";
+import { fetchMessages, sendMessageApi, reactToMessageApi } from "../../api/message.api.js";
 import { getCurrentUser } from "../../api/auth.api.js";
 import { markSeen } from "../../api/chat.api.js";
-import { reactToMessageApi } from "../../api/message.api.js";
-
 import socket from "../../socket.js";
 
 function Chat() {
@@ -22,76 +20,96 @@ function Chat() {
   const chatBoxRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  // Load current user
   useEffect(() => {
     const loadUser = async () => {
       const res = await getCurrentUser();
       setCurrentUserId(res.data.user._id);
     };
-
     loadUser();
   }, []);
+
+  // Reset chat state safely
+  const resetChatState = useCallback(() => {
+    setMessages([]);
+    setPage(1);
+    setHasMore(true);
+  }, []);
+
+  // Stable loader
+  const loadMessages = useCallback(async (pageToLoad = 1) => {
+    if (!activeChat || loadingMore) return;
+
+    setLoadingMore(true);
+
+    const res = await fetchMessages(activeChat, pageToLoad);
+    const newMessages = res.data.messages;
+
+    setMessages(prev => {
+      const map = new Map();
+
+      newMessages.forEach(m => map.set(m._id, m));
+      prev.forEach(m => map.set(m._id, m));
+
+      return Array.from(map.values()).sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+    });
+
+    setHasMore(pageToLoad < res.data.totalPages);
+    setLoadingMore(false);
+  }, [activeChat, loadingMore]);
 
   useEffect(() => {
     if (!activeChat) return;
 
-    setMessages([]);
-    setPage(1);
-    setHasMore(true);
+    resetChatState();
+    loadMessages(1);
 
-    const loadMessages = async (pageToLoad = 1, isScroll = false) => {
-      if (!activeChat || loadingMore) return;
-
-      setLoadingMore(true);
-
-      const res = await fetchMessages(activeChat , pageToLoad);
-
-
-      
-      setMessages((prev) => {
-        const map = new Map();
-
-        res.data.messages.forEach((m) => map.set(m._id, m));
-        prev.forEach((m) => map.set(m._id, m));
-
-        return Array.from(map.values()).sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-        );
-      });
-
-      socket.emit("join chat", activeChat);
-      markSeen(activeChat);
-    };
-
-    loadMessages();
+    socket.emit("join chat", activeChat);
+    markSeen(activeChat);
 
     return () => {
       socket.emit("leave chat", activeChat);
     };
-  }, [activeChat]);
+  }, [activeChat, loadMessages, resetChatState]);
 
+  // Infinite scroll
   useEffect(() => {
-    socket.on("message received", (msg) => {
+    const chatBox = chatBoxRef.current;
+    if (!chatBox) return;
+
+    const handleScroll = async () => {
+      if (chatBox.scrollTop === 0 && hasMore && !loadingMore) {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        await loadMessages(nextPage);
+      }
+    };
+
+    chatBox.addEventListener("scroll", handleScroll);
+    return () => chatBox.removeEventListener("scroll", handleScroll);
+  }, [page, hasMore, loadingMore, activeChat, loadMessages]);
+
+  // Realtime messages
+  useEffect(() => {
+    const handler = (msg) => {
       if (msg.chat._id === activeChat) {
-        setMessages((prev) => {
-          if (prev.some((m) => m._id === msg._id)) return prev;
+        setMessages(prev => {
+          if (prev.some(m => m._id === msg._id)) return prev;
           return [...prev, msg];
         });
       }
-    });
+    };
 
-    return () => socket.off("message received");
+    socket.on("message received", handler);
+    return () => socket.off("message received", handler);
   }, [activeChat]);
 
+  // Typing indicators
   useEffect(() => {
-    socket.on("typing", () => {
-      console.log("Typing Event Received");
-      setIsTyping(true);
-    });
-
-    socket.on("stop typing", () => {
-      console.log("Stop Typing");
-      setIsTyping(false);
-    });
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
 
     return () => {
       socket.off("typing");
@@ -99,6 +117,7 @@ function Chat() {
     };
   }, []);
 
+  // Auto-scroll bottom
   useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
@@ -111,10 +130,11 @@ function Chat() {
     }
   }, [messages]);
 
+  // Reactions
   useEffect(() => {
     socket.on("reaction updated", (updatedMessage) => {
-      setMessages((prev) =>
-        prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m)),
+      setMessages(prev =>
+        prev.map(m => (m._id === updatedMessage._id ? updatedMessage : m))
       );
     });
 
@@ -154,6 +174,9 @@ function Chat() {
 
         <section className={style.middleSection}>
           <div className={style.chat} ref={chatBoxRef}>
+
+            {loadingMore && <p>Loading older messages...</p>}
+
             {messages.map((msg) => (
               <div
                 key={msg._id}
@@ -166,15 +189,9 @@ function Chat() {
                 <p>{msg.message}</p>
 
                 <div className={style.reactionPicker}>
-                  <span onClick={() => reactToMessageApi(msg._id, "❤️")}>
-                    ❤️
-                  </span>
-                  <span onClick={() => reactToMessageApi(msg._id, "😂")}>
-                    😂
-                  </span>
-                  <span onClick={() => reactToMessageApi(msg._id, "👍")}>
-                    👍
-                  </span>
+                  <span onClick={() => reactToMessageApi(msg._id, "❤️")}>❤️</span>
+                  <span onClick={() => reactToMessageApi(msg._id, "😂")}>😂</span>
+                  <span onClick={() => reactToMessageApi(msg._id, "👍")}>👍</span>
                 </div>
 
                 {msg.reactions?.length > 0 && (
@@ -195,9 +212,8 @@ function Chat() {
               </div>
             ))}
 
-            {isTyping && (
-              <p style={{ fontSize: "12px", color: "gray" }}>Typing...</p>
-            )}
+            {isTyping && <p style={{ fontSize: "12px", color: "gray" }}>Typing...</p>}
+
             <div ref={chatEndRef} />
           </div>
         </section>
@@ -208,14 +224,10 @@ function Chat() {
               <input
                 placeholder="Type a message"
                 value={newMessage}
-                onChange={(e) => {
-                  handleTyping(e.target.value);
-                  socket.emit("typing", activeChat);
-                }}
+                onChange={(e) => handleTyping(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               />
             </div>
-
             <button onClick={sendMessage}>Send</button>
           </div>
         </section>

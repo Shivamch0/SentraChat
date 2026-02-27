@@ -1,5 +1,6 @@
 .chatContainer {
   display: flex;
+  height: 100vh;
 }
 
 .chatPannel {
@@ -7,6 +8,7 @@
   flex-direction: column;
   width: 100%;
   height: 100vh;
+  overflow: hidden;
 }
 
 .topSection {
@@ -41,6 +43,8 @@
   flex: 1;
   background: lightgray;
   overflow: hidden;
+  min-height: 0;
+  display: flex;
 }
 
 .chatSection {
@@ -64,6 +68,7 @@
   flex-direction: column;
   gap: 20px;
   padding-right: 8px;
+  min-height: 0;
 }
 
 .day {

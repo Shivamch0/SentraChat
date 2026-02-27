@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import style from "./Chat.module.css";
 import SideBar from "../../Components/Sidebar/SideBar";
-import { fetchMessages, sendMessageApi, reactToMessageApi } from "../../api/message.api.js";
+import {
+  fetchMessages,
+  sendMessageApi,
+  reactToMessageApi,
+} from "../../api/message.api.js";
 import { getCurrentUser } from "../../api/auth.api.js";
 import { markSeen } from "../../api/chat.api.js";
 import socket from "../../socket.js";
@@ -19,6 +23,9 @@ function Chat() {
   const chatEndRef = useRef(null);
   const chatBoxRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const loadingRef = useRef(false);
+  const previousHeightRef = useRef(0);
+  const shouldRestoreScrollRef = useRef(false);
 
   // Load current user
   useEffect(() => {
@@ -37,28 +44,34 @@ function Chat() {
   }, []);
 
   // Stable loader
-  const loadMessages = useCallback(async (pageToLoad = 1) => {
-    if (!activeChat || loadingMore) return;
+  const loadMessages = useCallback(
+    async (pageToLoad = 1) => {
+      if (!activeChat || loadingRef.current) return;
 
-    setLoadingMore(true);
+      loadingRef.current = true;
+      setLoadingMore(true);
 
-    const res = await fetchMessages(activeChat, pageToLoad);
-    const newMessages = res.data.messages;
+      const res = await fetchMessages(activeChat, pageToLoad);
+      const newMessages = res.data.messages;
 
-    setMessages(prev => {
-      const map = new Map();
+      setMessages((prev) => {
+        const map = new Map();
 
-      newMessages.forEach(m => map.set(m._id, m));
-      prev.forEach(m => map.set(m._id, m));
+        newMessages.forEach((m) => map.set(m._id, m));
+        prev.forEach((m) => map.set(m._id, m));
 
-      return Array.from(map.values()).sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      );
-    });
+        return Array.from(map.values()).sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+        );
+      });
 
-    setHasMore(pageToLoad < res.data.totalPages);
-    setLoadingMore(false);
-  }, [activeChat, loadingMore]);
+      setHasMore(pageToLoad < res.data.totalPages);
+
+      loadingRef.current = false;
+      setLoadingMore(false);
+    },
+    [activeChat],
+  );
 
   useEffect(() => {
     if (!activeChat) return;
@@ -80,23 +93,39 @@ function Chat() {
     if (!chatBox) return;
 
     const handleScroll = async () => {
-      if (chatBox.scrollTop === 0 && hasMore && !loadingMore) {
+      if (chatBox.scrollTop === 0 && hasMore && !loadingRef.current) {
+        previousHeightRef.current = chatBox.scrollHeight;
+        shouldRestoreScrollRef.current = true
+
         const nextPage = page + 1;
         setPage(nextPage);
+
         await loadMessages(nextPage);
       }
     };
 
     chatBox.addEventListener("scroll", handleScroll);
     return () => chatBox.removeEventListener("scroll", handleScroll);
-  }, [page, hasMore, loadingMore, activeChat, loadMessages]);
+  }, [page, hasMore, activeChat, loadMessages]);
+
+  useEffect(() => {
+  if (!shouldRestoreScrollRef.current) return;
+
+  const chatBox = chatBoxRef.current;
+  if (!chatBox) return;
+
+  const newHeight = chatBox.scrollHeight;
+  chatBox.scrollTop = newHeight - previousHeightRef.current;
+
+  shouldRestoreScrollRef.current = false;
+}, [messages]);
 
   // Realtime messages
   useEffect(() => {
     const handler = (msg) => {
       if (msg.chat._id === activeChat) {
-        setMessages(prev => {
-          if (prev.some(m => m._id === msg._id)) return prev;
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
           return [...prev, msg];
         });
       }
@@ -123,18 +152,18 @@ function Chat() {
     if (!chatBox) return;
 
     const nearBottom =
-      chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 150;
+      chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 150 && page === 1;
 
     if (nearBottom) {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages , page]);
 
   // Reactions
   useEffect(() => {
     socket.on("reaction updated", (updatedMessage) => {
-      setMessages(prev =>
-        prev.map(m => (m._id === updatedMessage._id ? updatedMessage : m))
+      setMessages((prev) =>
+        prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m)),
       );
     });
 
@@ -174,7 +203,6 @@ function Chat() {
 
         <section className={style.middleSection}>
           <div className={style.chat} ref={chatBoxRef}>
-
             {loadingMore && <p>Loading older messages...</p>}
 
             {messages.map((msg) => (
@@ -189,9 +217,15 @@ function Chat() {
                 <p>{msg.message}</p>
 
                 <div className={style.reactionPicker}>
-                  <span onClick={() => reactToMessageApi(msg._id, "❤️")}>❤️</span>
-                  <span onClick={() => reactToMessageApi(msg._id, "😂")}>😂</span>
-                  <span onClick={() => reactToMessageApi(msg._id, "👍")}>👍</span>
+                  <span onClick={() => reactToMessageApi(msg._id, "❤️")}>
+                    ❤️
+                  </span>
+                  <span onClick={() => reactToMessageApi(msg._id, "😂")}>
+                    😂
+                  </span>
+                  <span onClick={() => reactToMessageApi(msg._id, "👍")}>
+                    👍
+                  </span>
                 </div>
 
                 {msg.reactions?.length > 0 && (
@@ -212,7 +246,9 @@ function Chat() {
               </div>
             ))}
 
-            {isTyping && <p style={{ fontSize: "12px", color: "gray" }}>Typing...</p>}
+            {isTyping && (
+              <p style={{ fontSize: "12px", color: "gray" }}>Typing...</p>
+            )}
 
             <div ref={chatEndRef} />
           </div>

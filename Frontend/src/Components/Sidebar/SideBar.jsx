@@ -25,8 +25,6 @@ function SideBar({ setActiveChat }) {
             });
           }
         });
-
-        console.log(res.data);
         setOnlineMap(status);
         setChats(res.data);
       } catch (error) {

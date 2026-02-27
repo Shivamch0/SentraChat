@@ -5,12 +5,15 @@ import {
   fetchMessages,
   sendMessageApi,
   reactToMessageApi,
+  deleteMessage,
+  searchMessages,
 } from "../../api/message.api.js";
 import { getCurrentUser } from "../../api/auth.api.js";
-import { markSeen } from "../../api/chat.api.js";
+import { markSeen, fetchChats } from "../../api/chat.api.js";
 import socket from "../../socket.js";
 
 function Chat() {
+  //States //
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -19,6 +22,11 @@ function Chat() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [chatUser, setChatUser] = useState(null);
+  const [replyMsg, setReplyMsg] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [openMenu, setOpenMenu] = useState(null);
 
   const chatEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -95,7 +103,7 @@ function Chat() {
     const handleScroll = async () => {
       if (chatBox.scrollTop === 0 && hasMore && !loadingRef.current) {
         previousHeightRef.current = chatBox.scrollHeight;
-        shouldRestoreScrollRef.current = true
+        shouldRestoreScrollRef.current = true;
 
         const nextPage = page + 1;
         setPage(nextPage);
@@ -109,16 +117,16 @@ function Chat() {
   }, [page, hasMore, activeChat, loadMessages]);
 
   useEffect(() => {
-  if (!shouldRestoreScrollRef.current) return;
+    if (!shouldRestoreScrollRef.current) return;
 
-  const chatBox = chatBoxRef.current;
-  if (!chatBox) return;
+    const chatBox = chatBoxRef.current;
+    if (!chatBox) return;
 
-  const newHeight = chatBox.scrollHeight;
-  chatBox.scrollTop = newHeight - previousHeightRef.current;
+    const newHeight = chatBox.scrollHeight;
+    chatBox.scrollTop = newHeight - previousHeightRef.current;
 
-  shouldRestoreScrollRef.current = false;
-}, [messages]);
+    shouldRestoreScrollRef.current = false;
+  }, [messages]);
 
   // Realtime messages
   useEffect(() => {
@@ -152,12 +160,13 @@ function Chat() {
     if (!chatBox) return;
 
     const nearBottom =
-      chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 150 && page === 1;
+      chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 150 &&
+      page === 1;
 
     if (nearBottom) {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages , page]);
+  }, [messages, page]);
 
   // Reactions
   useEffect(() => {
@@ -169,6 +178,46 @@ function Chat() {
 
     return () => socket.off("reaction updated");
   }, []);
+
+  useEffect(() => {
+    socket.on("message updated", (updatedMessage) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m)),
+      );
+    });
+
+    return () => socket.off("message updated");
+  }, []);
+
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const findUser = async () => {
+      const chats = await fetchChats();
+      const chat = chats.data.find((c) => c._id === activeChat);
+
+      if (!chat?.isGroupChat) {
+        const other = chat.users.find((u) => u._id !== currentUserId);
+        setChatUser(other);
+      }
+    };
+
+    findUser();
+  }, [activeChat, currentUserId]);
+
+  useEffect(() => {
+    socket.on("user status changed", ({ userId, isOnline, lastSeen }) => {
+      if (chatUser && chatUser._id === userId) {
+        setChatUser((prev) => ({
+          ...prev,
+          isOnline,
+          lastSeen,
+        }));
+      }
+    });
+
+    return () => socket.off("user status changed");
+  }, [chatUser]);
 
   const handleTyping = (value) => {
     setNewMessage(value);
@@ -184,7 +233,8 @@ function Chat() {
     if (!newMessage.trim() || !activeChat) return;
 
     try {
-      await sendMessageApi(activeChat, newMessage);
+      await sendMessageApi(activeChat, newMessage, replyMsg?._id);
+      setReplyMsg(null);
       setNewMessage("");
       socket.emit("stop typing", activeChat);
     } catch (err) {
@@ -192,20 +242,55 @@ function Chat() {
     }
   };
 
+  const toggleMenu = (id) => {
+    setOpenMenu(openMenu === id ? null : id);
+  };
+
+  const displayMessages = searchQuery ? searchResults : messages;
+
   return (
     <div className={style.chatContainer}>
       <SideBar setActiveChat={setActiveChat} />
 
       <div className={style.chatPannel}>
         <section className={style.topSection}>
-          <h4>Chat</h4>
+          {chatUser && (
+            <div className={style.userInfo}>
+              <img src={chatUser.avatar || "/default.png"} />
+              <div>
+                <h4>{chatUser.fullName}</h4>
+                <p style={{ fontSize: "12px", color: "gray" }}>
+                  {chatUser.isOnline
+                    ? "Online"
+                    : `Last seen ${new Date(chatUser.lastSeen).toLocaleTimeString()}`}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <input
+            className={style.searchInput}
+            placeholder="🔍 Search messages..."
+            value={searchQuery}
+            onChange={async (e) => {
+              const q = e.target.value;
+              setSearchQuery(q);
+
+              if (q.trim()) {
+                const res = await searchMessages(activeChat, q);
+                setSearchResults(res.data);
+              } else {
+                setSearchResults([]);
+              }
+            }}
+          />
         </section>
 
         <section className={style.middleSection}>
           <div className={style.chat} ref={chatBoxRef}>
             {loadingMore && <p>Loading older messages...</p>}
 
-            {messages.map((msg) => (
+            {displayMessages.map((msg) => (
               <div
                 key={msg._id}
                 className={
@@ -214,35 +299,63 @@ function Chat() {
                     : style.recieverMessage
                 }
               >
-                <p>{msg.message}</p>
+                <div className={style.messageWrapper}>
+                  {/* Reply Preview */}
+                  {msg.replyTo && (
+                    <div className={style.replyPreview}>
+                      <span>{msg.replyTo.sendBy?.fullName}</span>
+                      <p>{msg.replyTo.message}</p>
+                    </div>
+                  )}
 
-                <div className={style.reactionPicker}>
-                  <span onClick={() => reactToMessageApi(msg._id, "❤️")}>
-                    ❤️
-                  </span>
-                  <span onClick={() => reactToMessageApi(msg._id, "😂")}>
-                    😂
-                  </span>
-                  <span onClick={() => reactToMessageApi(msg._id, "👍")}>
-                    👍
-                  </span>
+                  {/* Bubble */}
+                  <div className={style.bubble}>
+                    <p>{msg.message}</p>
+
+                    <div className={style.bubbleFooter}>
+                      {/* Reactions */}
+                      {msg.reactions?.length > 0 && (
+                        <div className={style.reactionBubble}>
+                          {msg.reactions.map((r) => (
+                            <span key={r.emoji}>
+                              {r.emoji} {r.users.length}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Status + Menu */}
+                      <div className={style.messageFooter}>
+                        {msg.sendBy._id === currentUserId && (
+                          <span className={style.status}>
+                            {msg.messageStatus === "seen" ? "✔✔" : "✔"}
+                          </span>
+                        )}
+
+                        <span
+                          className={style.menuIcon}
+                          onClick={() => toggleMenu(msg._id)}
+                        >
+                          ⋮
+                        </span>
+
+                        {openMenu === msg._id && (
+                          <div className={style.dropdown}>
+                            <button onClick={() => setReplyMsg(msg)}>
+                              Reply
+                            </button>
+                            {msg.sendBy._id === currentUserId && (
+                              <button onClick={() => deleteMessage(msg._id)}>
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {msg.reactions?.length > 0 && (
-                  <div className={style.reactionBubble}>
-                    {msg.reactions.map((r) => (
-                      <span key={r.emoji}>
-                        {r.emoji} {r.users.length}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {msg.sendBy._id === currentUserId && (
-                  <span style={{ fontSize: "10px", marginLeft: "5px" }}>
-                    {msg.messageStatus === "seen" ? "✔✔" : "✔"}
-                  </span>
-                )}
               </div>
             ))}
 
@@ -253,6 +366,16 @@ function Chat() {
             <div ref={chatEndRef} />
           </div>
         </section>
+
+        {replyMsg && (
+          <div className={style.replyBox}>
+            <div>
+              <span>Replying to</span>
+              <p>{replyMsg.message}</p>
+            </div>
+            <button onClick={() => setReplyMsg(null)}>✕</button>
+          </div>
+        )}
 
         <section className={style.bottomSection}>
           <div className={style.messageContainer}>

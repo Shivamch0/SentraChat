@@ -18,3 +18,13 @@ export const reactToMessageApi = async (messageId, emoji) => {
   const res = await api.post(`/message/react/${messageId}`, { emoji });
   return res.data;
 };
+
+export const deleteMessage = async (messageId) => {
+  const res = await api.delete(`/message/delete/${messageId}`);
+  return res.data;
+}
+
+export const searchMessages = async (chatId , query) => {
+  const res = await api(`/message/search/${chatId}?query=${query}`);
+  return res.data
+}

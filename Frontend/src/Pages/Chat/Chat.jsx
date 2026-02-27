@@ -11,6 +11,7 @@ import {
 import { getCurrentUser } from "../../api/auth.api.js";
 import { markSeen, fetchChats } from "../../api/chat.api.js";
 import socket from "../../socket.js";
+import { ProfilePannel } from "../../Components/ProfilePannel/ProfilePannel.jsx";
 
 function Chat() {
   //States //
@@ -27,6 +28,7 @@ function Chat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [openMenu, setOpenMenu] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   const chatEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -168,6 +170,15 @@ function Chat() {
     }
   }, [messages, page]);
 
+  useEffect(() => {
+    if (!chatBoxRef.current) return;
+    if (page !== 1) return;
+
+    chatEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, activeChat]);
+
   // Reactions
   useEffect(() => {
     socket.on("reaction updated", (updatedMessage) => {
@@ -264,10 +275,17 @@ function Chat() {
     <div className={style.chatContainer}>
       <SideBar setActiveChat={setActiveChat} />
 
+      {showProfile && (
+        <ProfilePannel user={chatUser} onClose={() => setShowProfile(false)} />
+      )}
+
       <div className={style.chatPannel}>
         <section className={style.topSection}>
           {chatUser && (
-            <div className={style.userInfo}>
+            <div
+              className={style.userInfo}
+              onClick={() => setShowProfile(true)}
+            >
               <img src={chatUser.avatar || "/default.png"} />
               <div>
                 <h4>{chatUser.fullName}</h4>
@@ -321,7 +339,15 @@ function Chat() {
                   )}
 
                   {/* Bubble */}
-                  <div className={style.bubble}>
+                  <div
+                    className={`${style.bubble} ${
+                      msg.emotionType === "positive"
+                        ? style.positive
+                        : msg.emotionType === "negative"
+                          ? style.negative
+                          : style.neutral
+                    }`}
+                  >
                     <div className={style.messageContent}>
                       <p>{msg.message}</p>
 

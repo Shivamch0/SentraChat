@@ -1,6 +1,7 @@
 .chatContainer {
   display: flex;
   height: 100vh;
+  position: relative;
 }
 
 .chatPannel {
@@ -292,4 +293,18 @@
   border: none;
   color: white;
   cursor: pointer;
+}
+
+.positive {
+  background: rgba(0, 255, 150, 0.15);
+  border: 1px solid rgba(0, 255, 150, 0.3);
+}
+
+.negative {
+  background: rgba(255, 80, 80, 0.15);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+}
+
+.neutral {
+  background: rgba(255, 255, 255, 0.08);
 }

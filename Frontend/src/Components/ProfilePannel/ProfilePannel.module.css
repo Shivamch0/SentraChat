@@ -1,0 +1,118 @@
+.panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 360px;
+  height: 100%;
+  background: #111b21;
+  color: #e9edef;
+  z-index: 999;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #2a3942;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header span {
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.settingsBtn {
+  background: transparent;
+  border: none;
+  color: #aebac1;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.avatarSection {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.avatarWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.avatarWrapper img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid #00a884;
+}
+
+.uploadBtn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #00a884;
+  color: white;
+  border-radius: 50%;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.section {
+  margin-top: 30px;
+}
+
+.section h4 {
+  color: #8696a0;
+  font-size: 13px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px;
+  background: #202c33;
+  border: none;
+  color: white;
+  border-radius: 8px;
+}
+
+.saveBtn {
+  margin-top: 20px;
+  background: #00a884;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+}
+
+.settingsWrapper {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: 35px;
+  background: #202c33;
+  border-radius: 8px;
+  padding: 5px 0;
+  width: 150px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  z-index: 1000;
+}
+
+.dropdown p {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown p:hover {
+  background: #2a3942;
+}
+
+.logout {
+  color: #ff5c5c;
+}

@@ -21,10 +21,12 @@ import userRoute from "./routes/user.routes.js";
 import messageRoute from "./routes/message.routes.js";
 import chatRoute from "./routes/chat.routes.js";
 import emotionRoute from "./routes/emotion.routes.js"
+import profileRoute from "./routes/profile.routes.js"
 
 app.use("/api/v1/users", userRoute);
 app.use("/api/v1/message", messageRoute);
 app.use("/api/v1/chat" , chatRoute);
 app.use("/api/v1/emotion" , emotionRoute);
+app.use("/api/v1/profile", profileRoute);
 
 export default app;

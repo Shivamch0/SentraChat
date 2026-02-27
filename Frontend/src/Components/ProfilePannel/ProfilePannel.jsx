@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import style from "./ProfilePannel.module.css";
-import { logOutUser } from "../../api/auth.api";
+import { logOutUser } from "../../api/auth.api.js";
+import { uploadAvatar , updateProfile } from "../../api/profile.js";
+
 
 function ProfilePannel({ user, onClose }) {
   const [editMode, setEditMode] = useState(false);
   const [name, setName] = useState(user?.fullName || "");
   const [about, setAbout] = useState(user?.about || "");
   const [showMenu, setShowMenu] = useState(false);
+  const [preview , setPreview] = useState(null);
+  const [tempAvatar, setTempAvatar] = useState(null);
 
 
   const handleLogout = async () => {
@@ -14,7 +18,22 @@ function ProfilePannel({ user, onClose }) {
     window.location.href = "/login";
   };
 
-  const saveChanges = () => {};
+  const handleSave = async () => {
+     const res = await updateProfile({
+    fullName: name,
+    about,
+    avatar: tempAvatar
+  });
+
+  setEditMode(false);
+  setTempAvatar(null);
+
+  setPreview(res.user.avatar);
+
+  window.dispatchEvent(
+    new CustomEvent("profileUpdated", { detail: res.user })
+  );
+  };
 
   return (
     <div className={style.panel}>
@@ -53,12 +72,21 @@ function ProfilePannel({ user, onClose }) {
       {/* Avatar */}
       <div className={style.avatarSection}>
         <div className={style.avatarWrapper}>
-          <img src={user?.avatar || "/default.png"} />
+          <img src={preview || user?.avatar || "/default.png"} key={preview || user?.avatar} />
 
           {editMode && (
             <label className={style.uploadBtn}>
               📷
-              <input type="file" hidden />
+              <input type="file" hidden 
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if(!file) return;
+
+                  const res = await uploadAvatar(file);
+                  setPreview(res.user.avatar);
+                  setTempAvatar(res.user.avatar);
+                }}
+              />
             </label>
           )}
         </div>
@@ -89,7 +117,7 @@ function ProfilePannel({ user, onClose }) {
       </div>
 
       {editMode && (
-        <button className={style.saveBtn} onClick={() => saveChanges()}>
+        <button className={style.saveBtn} onClick={handleSave}>
           Save Changes
         </button>
       )}

@@ -37,12 +37,12 @@ function SideBar({ setActiveChat }) {
   }, []);
 
   useEffect(() => {
-  const loadUser = async () => {
-    const res = await getCurrentUser();
-    setCurrentUserId(res.data.user._id);
-  };
-  loadUser();
-}, []);
+    const loadUser = async () => {
+      const res = await getCurrentUser();
+      setCurrentUserId(res.data.user._id);
+    };
+    loadUser();
+  }, []);
 
   useEffect(() => {
     socket.on("user status changed", ({ userId, isOnline }) => {
@@ -76,31 +76,47 @@ function SideBar({ setActiveChat }) {
   }, []);
 
   useEffect(() => {
-  socket.on("chat updated", (updatedChat) => {
-    setChats(prev => {
-      const exists = prev.find(c => c._id === updatedChat._id);
+    socket.on("chat updated", (updatedChat) => {
+      setChats((prev) => {
+        const exists = prev.find((c) => c._id === updatedChat._id);
 
-      let newChats;
+        let newChats;
 
-      if (exists) {
-        newChats = prev.map(c =>
-          c._id === updatedChat._id ? updatedChat : c
-        );
-      } else {
-        newChats = [updatedChat, ...prev];
-      }
+        if (exists) {
+          newChats = prev.map((c) =>
+            c._id === updatedChat._id ? updatedChat : c,
+          );
+        } else {
+          newChats = [updatedChat, ...prev];
+        }
 
-      const active = newChats.find(c => c._id === updatedChat._id);
+        const active = newChats.find((c) => c._id === updatedChat._id);
 
-      return [
-        active,
-        ...newChats.filter(c => c._id !== updatedChat._id),
-      ];
+        return [active, ...newChats.filter((c) => c._id !== updatedChat._id)];
+      });
     });
-  });
 
-  return () => socket.off("chat updated");
-}, []);
+    return () => socket.off("chat updated");
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const updatedUser = e.detail;
+
+      setChats((prev) =>
+        prev.map(chat => ({
+          ...chat,
+          users: chat.users.map(u =>
+            u._id === updatedUser._id ? updatedUser : u,
+          ),
+        })),
+      );
+    };
+
+    window.addEventListener("profileUpdated", handler);
+
+    return () => window.removeEventListener("profileUpdated", handler);
+  }, []); 
 
   const handleNewChat = async () => {
     const userId = prompt("Enter user ID to start chat:");
@@ -135,7 +151,7 @@ function SideBar({ setActiveChat }) {
             chats.map((chat) => {
               const otherUser =
                 !chat.isGroupChat && Array.isArray(chat.users)
-                  ? chat.users.find((u) => u._id !== currentUserId) 
+                  ? chat.users.find((u) => u._id !== currentUserId)
                   : null;
 
               return (

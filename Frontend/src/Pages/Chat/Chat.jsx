@@ -230,6 +230,19 @@ function Chat() {
     return () => socket.off("user status changed");
   }, [chatUser]);
 
+  useEffect(() => {
+    const handler = (e) => {
+      const updateUser = e.detail;
+      if (chatUser?._id === updateUser._id) {
+        setChatUser(updateUser);
+      }
+    };
+
+    window.addEventListener("profileUpdated", handler);
+
+    return () => window.removeEventListener("profileUpdated", handler);
+  }, [chatUser]);
+
   const handleTyping = (value) => {
     setNewMessage(value);
     socket.emit("typing", activeChat);
@@ -286,7 +299,7 @@ function Chat() {
               className={style.userInfo}
               onClick={() => setShowProfile(true)}
             >
-              <img src={chatUser.avatar || "/default.png"} />
+              <img src={chatUser?.avatar || "/default.png"} key={chatUser?.avatar} />
               <div>
                 <h4>{chatUser.fullName}</h4>
                 <p style={{ fontSize: "12px", color: "gray" }}>

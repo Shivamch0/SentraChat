@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import fetch from "node-fetch";
+
 dotenv.config({
   path: ".env",
 });
@@ -9,28 +10,39 @@ const HUGGING_FACE_TOKEN = process.env.HUGGING_FACE_API_KEY;
 export const analyzeEmotion = async (text) => {
   try {
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment",
+      "https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-roberta-base-sentiment",
       {
         method: "POST",
         headers: {
-          authorization: `Bearer ${HUGGING_FACE_TOKEN}`,
+          Authorization: `Bearer ${HUGGING_FACE_TOKEN}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ inputs: text }),
-      },
+      }
     );
 
     const result = await response.json();
 
-    if (!Array.isArray(result) || !result[0]) {
+    if (!Array.isArray(result) || !Array.isArray(result[0])) {
       return "neutral";
     }
 
-    const label = result[0].label.toLowerCase();
+    const predictions = result[0];
 
-    if (label.includes("positive")) return "positive";
-    if (label.includes("negative")) return "negative";
-    return "neutral";
+    const best = predictions.reduce((prev, curr) =>
+      curr.score > prev.score ? curr : prev
+    );
+
+    switch (best.label) {
+      case "LABEL_2":
+        return "positive";
+      case "LABEL_0":
+        return "negative";
+      case "LABEL_1":
+      default:
+        return "neutral";
+    }
+
   } catch (error) {
     console.error("HuggingFace error:", error);
     return "neutral";

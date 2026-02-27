@@ -106,6 +106,17 @@
   color: #4f8fd9;
 }
 
+.messageContent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.emotion {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
 /* ---------- MESSAGE BUBBLE ---------- */
 
 .bubble {

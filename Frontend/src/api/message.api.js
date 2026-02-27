@@ -25,6 +25,11 @@ export const deleteMessage = async (messageId) => {
 }
 
 export const searchMessages = async (chatId , query) => {
-  const res = await api(`/message/search/${chatId}?query=${query}`);
+  const res = await api.get(`/message/search/${chatId}?query=${query}`);
   return res.data
+}
+
+export const getEmotionFromApi = async () => {
+  const res = await api.post("/emotion/detect");
+  return res.data;
 }

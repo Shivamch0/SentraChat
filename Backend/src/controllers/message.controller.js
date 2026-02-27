@@ -3,7 +3,7 @@ import { Chat } from "../models/chat.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
-import { analyzeEmotion } from "../services/emotion.service.js";
+import { getEmotionFromAPI } from "../utils/emotionClient.js";
 import { Notification } from "../models/notification.model.js";
 
 const sendMessage = asyncHandler(async (req, res) => {
@@ -25,7 +25,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     }
   }
 
-  let emotionType = await analyzeEmotion(message);
+  let emotionType = await getEmotionFromAPI(message);
 
   const newMessage = await Message.create({
     sendBy,
@@ -74,6 +74,8 @@ const sendMessage = asyncHandler(async (req, res) => {
         select: "fullName userName avatar",
       },
     });
+
+  console.log("Incoming message:", message);
 
   io.to(chatId).emit("message received", fullMessage);
 
@@ -130,7 +132,7 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
 
   let emotionType = "neutral";
   if (caption) {
-    emotionType = await analyzeEmotion(caption);
+    emotionType = await getEmotionFromAPI(caption);
   }
 
   const newMessage = await Message.create({
@@ -181,20 +183,13 @@ const getMessage = asyncHandler(async (req, res) => {
     throw new ApiError(401, "User id is required...");
   }
 
-  /*
-      ADDED: pagination query params
-      Example: ?page=1&limit=20
-    */
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
 
-  /*
-       ADDED: calculate how many docs to skip
-    */
   const skip = (page - 1) * limit;
 
   const messages = await Message.find({ chat: chatId })
-    .sort({ createdAt: -1 }) // oldest first
+    .sort({ createdAt: -1 }) 
     .skip(skip)
     .limit(limit)
     .populate("sendBy", "fullName userName avatar")

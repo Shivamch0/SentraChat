@@ -248,6 +248,18 @@ function Chat() {
 
   const displayMessages = searchQuery ? searchResults : messages;
 
+  const getEmotionEmoji = (emotion) => {
+    switch (emotion) {
+      case "positive":
+        return "🙂";
+      case "negative":
+        return "🙁";
+      case "neutral":
+      default:
+        return "😐";
+    }
+  };
+
   return (
     <div className={style.chatContainer}>
       <SideBar setActiveChat={setActiveChat} />
@@ -310,7 +322,15 @@ function Chat() {
 
                   {/* Bubble */}
                   <div className={style.bubble}>
-                    <p>{msg.message}</p>
+                    <div className={style.messageContent}>
+                      <p>{msg.message}</p>
+
+                      {msg.emotionType && (
+                        <span className={style.emotion}>
+                          {getEmotionEmoji(msg.emotionType)}
+                        </span>
+                      )}
+                    </div>
 
                     <div className={style.bubbleFooter}>
                       {/* Reactions */}
@@ -355,7 +375,6 @@ function Chat() {
                     </div>
                   </div>
                 </div>
-
               </div>
             ))}
 

@@ -32,4 +32,9 @@ export const searchMessages = async (chatId , query) => {
 export const getEmotionFromApi = async () => {
   const res = await api.post("/emotion/detect");
   return res.data;
+};
+
+export const sendMediaApi = async () => {
+  const res = await api.post()
+  return res.data
 }

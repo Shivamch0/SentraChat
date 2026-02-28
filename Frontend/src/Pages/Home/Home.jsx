@@ -1,6 +1,6 @@
 import React from "react";
 import style from "./Home.module.css";
-import smilyLogo from "../../assets/smilyLogo.png"
+import smilyLogo from "../../assets/SmilyLogo.png"
 import chat from "../../assets/chat app.png";
 import { Link , useNavigate } from "react-router-dom";
 

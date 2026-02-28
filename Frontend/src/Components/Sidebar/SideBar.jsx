@@ -148,9 +148,9 @@ function SideBar({ setActiveChat }) {
         <div className={style.chatSection}>
           <input type="text" placeholder="Search" />
           {Array.isArray(chats) &&
-            chats.map((chat) => {
+            chats?.filter(Boolean).map((chat) => {
               const otherUser =
-                !chat.isGroupChat && Array.isArray(chat.users)
+                !chat?.isGroupChat && Array.isArray(chat.users)
                   ? chat.users.find((u) => u._id !== currentUserId)
                   : null;
 
@@ -162,13 +162,13 @@ function SideBar({ setActiveChat }) {
                 >
                   <img
                     src={
-                      chat.isGroupChat
+                      chat?.isGroupChat
                         ? "/group.png"
                         : otherUser?.avatar || "/default.png"
                     }
                   />
 
-                  {!chat.isGroupChat && (
+                  {!chat?.isGroupChat && (
                     <span
                       className={`${style.statusDot} ${
                         onlineMap[otherUser?._id] ? style.online : style.offline
@@ -178,12 +178,12 @@ function SideBar({ setActiveChat }) {
 
                   <div className={style.details}>
                     <h4>
-                      {chat.isGroupChat
+                      {chat?.isGroupChat
                         ? chat.chatName
                         : otherUser?.fullName || "User"}
                     </h4>
 
-                    <p>{chat.latestMessage?.message || "No messages yet"}</p>
+                    <p>{chat.latestMessage?.message === "image"  ? "📷 Photo" : chat?.latestMessage?.message}</p>
 
                     {chat.unreadCount > 0 && (
                       <span className={style.unread}>{chat.unreadCount}</span>

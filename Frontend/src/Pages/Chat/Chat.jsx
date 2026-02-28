@@ -376,7 +376,7 @@ function Chat() {
                     }`}
                   >
                     <div className={style.messageContent}>
-                      {msg.messageType === "image" ? (
+                      {msg?.messageType === "image" ? (
                         <img src={msg.message} className={style.imageMsg} />
                       ) : (
                         <p>{msg.message}</p>

@@ -112,7 +112,7 @@ const sendMessage = asyncHandler(async (req, res) => {
 });
 
 const sendMediaMessage = asyncHandler(async (req, res) => {
-  const { chatId, messageType, caption, replyTo } = req.body;
+  const { chatId, caption, replyTo } = req.body;
   const sendBy = req.user._id;
 
   if (!chatId) {
@@ -150,14 +150,20 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
     message: mediaUrl,
     replyTo: replyTo || null,
     caption: caption || "",
-    messageType: messageType || "image",
+    messageType:  "image",
     emotionType,
     messageStatus: "sent",
   });
 
   await Chat.findByIdAndUpdate(chatId, {
     latestMessage: newMessage._id,
+    updatedAt: new Date(),
   });
+
+  const io = req.app.get("io");
+  for (const user of updatedChat.users) {
+    io.to(user._id.toString()).emit("chat updated", updatedChat);
+  }
 
   const fullMessage = await Message.findById(newMessage._id)
     .populate("sendBy", "fullName userName avatar")
@@ -169,7 +175,6 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
       },
     });
 
-  const io = req.app.get("io");
   io.to(chatId).emit("message received", fullMessage);
 
   await Message.findByIdAndUpdate(fullMessage._id, {
@@ -179,10 +184,6 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
   io.to(chatId).emit("message delivered", {
     messageId: fullMessage._id,
   });
-
-  console.log("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME);
-  console.log("API Key:", process.env.CLOUDINARY_API_KEY);
-  console.log("API Secret:", process.env.CLOUDINARY_API_SECRET);
 
   return res
     .status(201)

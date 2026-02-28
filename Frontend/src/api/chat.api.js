@@ -7,7 +7,7 @@ const createPrivateChat = async (targetedUser) =>{
 
 const createGroupChat = async (chatName , users) =>{
     const res = await api.post("/chat/group/chat" , { chatName , users });
-    return res.data
+    return res.data     
 }
 
 const fetchChats = async () =>{

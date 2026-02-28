@@ -7,7 +7,7 @@ import app from "./app.js";
 import { Server } from "socket.io";
 import http from "http";
 import { connectDB } from "./config/db.js";
-import { User } from "./models/user.models.js";
+import { User } from "./models/user.models.js"; 
 
 const Port = process.env.PORT || 3000;
 

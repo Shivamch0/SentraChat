@@ -4,7 +4,7 @@ import SideBar from "../../Components/Sidebar/SideBar";
 import {
   fetchMessages,
   sendMessageApi,
-  reactToMessageApi,
+  sendMediaApi,
   deleteMessage,
   searchMessages,
 } from "../../api/message.api.js";
@@ -266,6 +266,17 @@ function Chat() {
     }
   };
 
+  const handleMediaSend = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !activeChat) return;
+
+    try {
+      await sendMediaApi(activeChat, file);
+    } catch (err) {
+      console.log("Media send failed", err.message);
+    }
+  };
+
   const toggleMenu = (id) => {
     setOpenMenu(openMenu === id ? null : id);
   };
@@ -299,7 +310,10 @@ function Chat() {
               className={style.userInfo}
               onClick={() => setShowProfile(true)}
             >
-              <img src={chatUser?.avatar || "/default.png"} key={chatUser?.avatar} />
+              <img
+                src={chatUser?.avatar || "/default.png"}
+                key={chatUser?.avatar}
+              />
               <div>
                 <h4>{chatUser.fullName}</h4>
                 <p style={{ fontSize: "12px", color: "gray" }}>
@@ -362,7 +376,11 @@ function Chat() {
                     }`}
                   >
                     <div className={style.messageContent}>
-                      <p>{msg.message}</p>
+                      {msg.messageType === "image" ? (
+                        <img src={msg.message} className={style.imageMsg} />
+                      ) : (
+                        <p>{msg.message}</p>
+                      )}
 
                       {msg.emotionType && (
                         <span className={style.emotion}>
@@ -438,6 +456,10 @@ function Chat() {
         <section className={style.bottomSection}>
           <div className={style.messageContainer}>
             <div className={style.messageBar}>
+              <label className={style.attachBtn}>
+                📎
+                <input type="file" hidden onChange={handleMediaSend} />
+              </label>
               <input
                 placeholder="Type a message"
                 value={newMessage}

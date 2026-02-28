@@ -6,7 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { getEmotionFromAPI } from "../utils/emotionClient.js";
 import { Notification } from "../models/notification.model.js";
 import cloudinary from "../config/cloudinary.js";
-import fs from "fs"
+import fs from "fs";
 
 const sendMessage = asyncHandler(async (req, res) => {
   const { chatId, message, replyTo } = req.body;
@@ -150,7 +150,7 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
     message: mediaUrl,
     replyTo: replyTo || null,
     caption: caption || "",
-    messageType,
+    messageType: messageType || "image",
     emotionType,
     messageStatus: "sent",
   });
@@ -179,6 +179,10 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
   io.to(chatId).emit("message delivered", {
     messageId: fullMessage._id,
   });
+
+  console.log("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME);
+  console.log("API Key:", process.env.CLOUDINARY_API_KEY);
+  console.log("API Secret:", process.env.CLOUDINARY_API_SECRET);
 
   return res
     .status(201)

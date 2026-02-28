@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.route("/sendMessage").post(verifyJWT, sendMessage);
 
-router.post("/sendMedia", verifyJWT, upload.single("media"), sendMediaMessage);
+router.route("/sendMedia").post( verifyJWT, upload.single("media"), sendMediaMessage);
 
 router.route("/:chatId").get(verifyJWT, getMessage);
 

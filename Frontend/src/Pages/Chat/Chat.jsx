@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import style from "./Chat.module.css";
-import SideBar from "../../Components/Sidebar/SideBar";
+import SideBar from "../../Components/SideBar/SideBar.jsx";
 import {
   fetchMessages,
   sendMessageApi,

@@ -1,6 +1,6 @@
 import React from 'react';
 import style from "./SignUp.module.css";
-import purpleLike from '../../assets/like2.png';
+import purpleLike from '../../assets/Like2.png';
 import { Link , useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { signUpSchema } from '../../validations/signUpSchema';

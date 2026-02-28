@@ -5,6 +5,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { getEmotionFromAPI } from "../utils/emotionClient.js";
 import { Notification } from "../models/notification.model.js";
+import cloudinary from "../config/cloudinary.js";
+import fs from "fs"
 
 const sendMessage = asyncHandler(async (req, res) => {
   const { chatId, message, replyTo } = req.body;
@@ -128,12 +130,19 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
     }
   }
 
-  const mediaUrl = `${req.protocol}://${req.get("host")}/${req.file.path}`;
-
   let emotionType = "neutral";
   if (caption) {
     emotionType = await getEmotionFromAPI(caption);
   }
+
+  const upload = await cloudinary.uploader.upload(req.file.path, {
+    folder: "chat_media",
+    resource_type: "auto",
+  });
+
+  const mediaUrl = upload.secure_url;
+
+  fs.unlinkSync(req.file.path);
 
   const newMessage = await Message.create({
     sendBy,
@@ -189,7 +198,7 @@ const getMessage = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const messages = await Message.find({ chat: chatId })
-    .sort({ createdAt: -1 }) 
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .populate("sendBy", "fullName userName avatar")

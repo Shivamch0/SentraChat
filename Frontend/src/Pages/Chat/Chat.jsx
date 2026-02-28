@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import style from "./Chat.module.css";
-import SideBar from "../../Components/SideBar/SideBar.jsx";
+
 import {
   fetchMessages,
   sendMessageApi,
@@ -12,6 +12,7 @@ import { getCurrentUser } from "../../api/auth.api.js";
 import { markSeen, fetchChats } from "../../api/chat.api.js";
 import socket from "../../socket.js";
 import { ProfilePannel } from "../../Components/ProfilePannel/ProfilePannel.jsx";
+import SideBar from "../../Components/SideBar/SideBar.jsx";
 
 function Chat() {
   //States //

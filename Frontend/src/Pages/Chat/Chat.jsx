@@ -8,11 +8,12 @@ import {
   deleteMessage,
   searchMessages,
 } from "../../api/message.api.js";
+import { ProfilePannel } from "../../Components/ProfilePannel/ProfilePannel.jsx";
+import { SideBar } from "../../Components/SideBar/SideBar.jsx";
 import { getCurrentUser } from "../../api/auth.api.js";
 import { markSeen, fetchChats } from "../../api/chat.api.js";
 import socket from "../../socket.js";
-import { ProfilePannel } from "../../Components/ProfilePannel/ProfilePannel.jsx";
-import SideBar from "../../Components/SideBar/SideBar.jsx";
+
 
 function Chat() {
   //States //

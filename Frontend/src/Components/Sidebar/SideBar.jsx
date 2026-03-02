@@ -198,4 +198,4 @@ function SideBar({ setActiveChat }) {
   );
 }
 
-export default SideBar;
+export  { SideBar };

@@ -31,4 +31,8 @@ app.use("/api/v1/emotion" , emotionRoute);
 app.use("/api/v1/profile", profileRoute);
 
 
+app.get("/", (req, res) => {
+  res.send("API is running 🚀");
+});
+
 export default app;

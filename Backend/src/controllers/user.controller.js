@@ -40,7 +40,7 @@
         const options = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: "None",
             path: "/",
             maxAge : 7 * 24 * 60 * 60 * 1000
         };
@@ -86,7 +86,7 @@
         const options = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: "None",
             path: "/",
             maxAge : 7 * 24 * 60 * 60 * 1000
         };
@@ -116,7 +116,7 @@
         const options = {
             httpOnly : true,
             secure : process.env.NODE_ENV === "production",
-            sameSite : "lax",
+            sameSite : "None",
             path : "/",
             maxAge : 7 * 24 * 60 *60 *1000
         }
@@ -154,7 +154,7 @@
         const options = {
             httpOnly : true,
             secure : process.env.NODE_ENV === "production",
-            sameSite : "lax",
+            sameSite : "None",
             path : "/",
             maxAge :  7 * 24 * 60 * 60 * 1000
         }

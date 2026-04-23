@@ -4,6 +4,7 @@ import Chat from "./Pages/Chat/Chat";
 import SignUp from "./Pages/SignUp/SignUp.jsx";
 import Login from "./Pages/Login/Login";
 import Home from "./Pages/Home/Home.jsx";
+import Skelton from "./Skelton.jsx";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -12,7 +13,7 @@ function App() {
     fetch(import.meta.env.VITE_API_URL).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <h2>Waking up server...</h2>;
+if(loading) return <Skelton />
   return (
     <>
       <div className="mainContainer">

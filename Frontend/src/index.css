@@ -10,3 +10,67 @@
 ::-webkit-scrollbar{
     display : none;
 }
+
+/* Skeleton base */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+}
+
+/* Shimmer effect */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150px;
+  height: 100%;
+  width: 150px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Layout helpers */
+.skeleton-container {
+  padding: 20px;
+}
+
+.skeleton-box {
+  height: 20px;
+  margin-bottom: 12px;
+}
+
+.skeleton-large {
+  height: 150px;
+}
+
+.skeleton-title {
+  width: 40%;
+  height: 30px;
+}
+
+.skeleton-text {
+  width: 60%;
+}
+
+.skeleton-grid {
+  display: flex;
+  gap: 16px;
+}
+
+.skeleton-card {
+  flex: 1;
+  height: 120px;
+}

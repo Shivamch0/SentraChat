@@ -19,7 +19,6 @@ function SignUp() {
     validationSchema : signUpSchema,
     onSubmit : async (values) => {
       try {
-        console.log(values)
         await registerUser(values);
         navigate("/login")
       } catch (error) {

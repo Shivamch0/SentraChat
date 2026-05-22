@@ -6,10 +6,11 @@ export const fetchMessages = async (chatId, page = 1) => {
   return res.data;
 };
 
-export const sendMessageApi = async (chatId, message) => {
+export const sendMessageApi = async (chatId, message, replyTo) => {
   const res = await api.post("/message/sendMessage", {
     chatId,
     message,
+    replyTo: replyTo || null,
   });
   return res.data;
 };

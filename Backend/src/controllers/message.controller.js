@@ -160,6 +160,16 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
     updatedAt: new Date(),
   });
 
+  const updatedChat = await Chat.findById(chatId)
+    .populate("users", "fullName userName avatar")
+    .populate({
+      path: "latestMessage",
+      populate: {
+        path: "sendBy",
+        select: "fullName userName avatar",
+      },
+    });
+
   const io = req.app.get("io");
   for (const user of updatedChat.users) {
     io.to(user._id.toString()).emit("chat updated", updatedChat);
@@ -173,6 +183,13 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
         path: "sendBy",
         select: "fullName userName avatar",
       },
+    })
+    .populate({
+      path: "chat",
+      populate: {
+        path: "users",
+        select: "fullName userName avatar",
+      },
     });
 
   io.to(chatId).emit("message received", fullMessage);
@@ -184,6 +201,23 @@ const sendMediaMessage = asyncHandler(async (req, res) => {
   io.to(chatId).emit("message delivered", {
     messageId: fullMessage._id,
   });
+
+  for (const user of fullMessage.chat.users) {
+    if (user._id.toString() !== sendBy.toString()) {
+      await Notification.create({
+        user: user._id,
+        type: "message",
+        message: fullMessage._id,
+        chat: chatId,
+      });
+
+      io.to(user._id.toString()).emit("new notification", {
+        chatId,
+        message: "📷 Photo",
+        sender: fullMessage.sendBy,
+      });
+    }
+  }
 
   return res
     .status(201)

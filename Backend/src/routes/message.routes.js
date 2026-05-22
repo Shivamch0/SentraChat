@@ -18,6 +18,8 @@ router.route("/sendMessage").post(verifyJWT, sendMessage);
 
 router.route("/sendMedia").post( verifyJWT, upload.single("media"), sendMediaMessage);
 
+router.route("/notifications").get(verifyJWT , getNotifications);
+
 router.route("/:chatId").get(verifyJWT, getMessage);
 
 router.route("/edit/:messageId").patch(verifyJWT, editMessage);
@@ -27,7 +29,5 @@ router.route("/delete/:messageId").delete(verifyJWT, deleteMessage);
 router.route("/react/:messageId").post(verifyJWT, reactToMessage);
 
 router.route("/search/:chatId").get(verifyJWT , searchMessages);
-
-router.route("/notifications").get(verifyJWT , getNotifications);
 
 export default router;

@@ -160,21 +160,23 @@ function SideBar({ setActiveChat }) {
                   className={style.chatPersons}
                   onClick={() => setActiveChat(chat._id)}
                 >
-                  <img
-                    src={
-                      chat?.isGroupChat
-                        ? "/group.png"
-                        : otherUser?.avatar || "/default.png"
-                    }
-                  />
-
-                  {!chat?.isGroupChat && (
-                    <span
-                      className={`${style.statusDot} ${
-                        onlineMap[otherUser?._id] ? style.online : style.offline
-                      }`}
+                  <div className={style.avatarWrapper}>
+                    <img
+                      src={
+                        chat?.isGroupChat
+                          ? "/group.png"
+                          : otherUser?.avatar || "/default.png"
+                      }
                     />
-                  )}
+
+                    {!chat?.isGroupChat && (
+                      <span
+                        className={`${style.statusDot} ${
+                          onlineMap[otherUser?._id] ? style.online : style.offline
+                        }`}
+                      />
+                    )}
+                  </div>
 
                   <div className={style.details}>
                     <h4>

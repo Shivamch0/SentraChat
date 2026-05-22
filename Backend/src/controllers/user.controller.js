@@ -11,9 +11,14 @@
             throw new ApiError(400 , "Fill all the fields...");
         }
 
-        const existedUser = await User.findOne({email});
+        const existedUser = await User.findOne({
+            $or: [{ email: email.toLowerCase() }, { userName }]
+        });
         if(existedUser){
-            throw new ApiError(401 , "User with this Email is already exists...");
+            if (existedUser.email === email.toLowerCase()) {
+                throw new ApiError(409 , "User with this Email already exists...");
+            }
+            throw new ApiError(409 , "Username is already taken...");
         }
 
         const user = await User.create({
@@ -100,7 +105,7 @@
     });
 
     const logoutUser = asyncHandler ( async ( req , res ) => {
-        const refreshToken = req.cookies?.refreshToken 
+        const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
         if(!refreshToken){
             throw new ApiError(401 , "No Refresh Token Provided...")
         }

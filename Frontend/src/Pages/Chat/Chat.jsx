@@ -43,7 +43,9 @@ function Chat() {
   useEffect(() => {
     const loadUser = async () => {
       const res = await getCurrentUser();
-      setCurrentUserId(res.data.user._id);
+      const userId = res.data.user._id;
+      setCurrentUserId(userId);
+      socket.emit("setup", userId);
     };
     loadUser();
   }, []);

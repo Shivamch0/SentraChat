@@ -186,6 +186,30 @@
             )
     });
 
+    const searchUsers = asyncHandler(async (req, res) => {
+        const { query } = req.query;
 
+        if (!query || query.trim() === "") {
+            return res.status(200).json(
+                new ApiResponse(200, { users: [] }, "Query is empty")
+            );
+        }
 
-    export { registerUser , loginUser , logoutUser , refreshAccessToken , getCurrentUser }
+        const users = await User.find({
+            $and: [
+                { _id: { $ne: req.user._id } },
+                {
+                    $or: [
+                        { userName: { $regex: query, $options: "i" } },
+                        { fullName: { $regex: query, $options: "i" } }
+                    ]
+                }
+            ]
+        }).select("-password -refreshToken").limit(10);
+
+        return res.status(200).json(
+            new ApiResponse(200, { users }, "Users fetched successfully...")
+        );
+    });
+
+    export { registerUser , loginUser , logoutUser , refreshAccessToken , getCurrentUser , searchUsers }

@@ -25,4 +25,9 @@ const getCurrentUser = async () => {
     return res.data
 }
 
-export { registerUser , loginUser , logOutUser , refreshToken , getCurrentUser }
+const searchUsers = async (query) => {
+    const res = await api.get(`/users/search?query=${encodeURIComponent(query)}`)
+    return res.data
+}
+
+export { registerUser , loginUser , logOutUser , refreshToken , getCurrentUser , searchUsers }

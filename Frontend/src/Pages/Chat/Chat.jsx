@@ -13,6 +13,7 @@ import { SideBar } from "../../Components/SideBar/SideBar.jsx";
 import { getCurrentUser } from "../../api/auth.api.js";
 import { markSeen, fetchChats } from "../../api/chat.api.js";
 import socket from "../../socket.js";
+import { playSentSound, playReceivedSound } from "../../utils/soundHelper.js";
 
 
 function Chat() {
@@ -137,9 +138,25 @@ function Chat() {
   // Realtime messages
   useEffect(() => {
     const handler = (msg) => {
+      // Play chime if we did NOT send the message
+      if (msg.sendBy?._id !== currentUserId) {
+        playReceivedSound();
+      }
+
       if (msg.chat._id === activeChat) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
+
+          // If we sent the message and there is an optimistic "sending" message with same content, replace it
+          if (msg.sendBy?._id === currentUserId) {
+            const tempIdx = prev.findIndex((m) => m.isOptimistic && m.message === msg.message);
+            if (tempIdx > -1) {
+              const copy = [...prev];
+              copy[tempIdx] = msg;
+              return copy;
+            }
+          }
+
           return [...prev, msg];
         });
       }
@@ -147,7 +164,7 @@ function Chat() {
 
     socket.on("message received", handler);
     return () => socket.off("message received", handler);
-  }, [activeChat]);
+  }, [activeChat, currentUserId]);
 
   // Typing indicators
   useEffect(() => {
@@ -260,13 +277,43 @@ function Chat() {
   const sendMessage = async () => {
     if (!newMessage.trim() || !activeChat) return;
 
+    const tempId = `temp-${Date.now()}`;
+    const messageText = newMessage;
+    const tempMsg = {
+      _id: tempId,
+      message: messageText,
+      sendBy: { _id: currentUserId, fullName: "You" },
+      messageType: "text",
+      replyTo: replyMsg ? { ...replyMsg } : null,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+      messageStatus: "sending",
+    };
+
+    setMessages((prev) => [...prev, tempMsg]);
+    setNewMessage("");
+    setReplyMsg(null);
+    socket.emit("stop typing", activeChat);
+    playSentSound();
+
     try {
-      await sendMessageApi(activeChat, newMessage, replyMsg?._id);
-      setReplyMsg(null);
-      setNewMessage("");
-      socket.emit("stop typing", activeChat);
+      const res = await sendMessageApi(activeChat, messageText, tempMsg.replyTo?._id);
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => m._id !== tempId);
+        if (filtered.some((m) => m._id === res.data._id)) {
+          return filtered;
+        }
+        return [...filtered, res.data];
+      });
     } catch (err) {
       console.log("Send failed", err);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === tempId
+            ? { ...msg, messageStatus: "failed", isOptimistic: false }
+            : msg
+        )
+      );
     }
   };
 
@@ -274,10 +321,39 @@ function Chat() {
     const file = e.target.files[0];
     if (!file || !activeChat) return;
 
+    const tempId = `temp-${Date.now()}`;
+    const localUrl = URL.createObjectURL(file);
+    const tempMsg = {
+      _id: tempId,
+      message: localUrl,
+      sendBy: { _id: currentUserId, fullName: "You" },
+      messageType: "image",
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+      messageStatus: "sending",
+    };
+
+    setMessages((prev) => [...prev, tempMsg]);
+    playSentSound();
+
     try {
-      await sendMediaApi(activeChat, file);
+      const res = await sendMediaApi(activeChat, file);
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => m._id !== tempId);
+        if (filtered.some((m) => m._id === res.data._id)) {
+          return filtered;
+        }
+        return [...filtered, res.data];
+      });
     } catch (err) {
       console.log("Media send failed", err.message);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === tempId
+            ? { ...msg, messageStatus: "failed", isOptimistic: false }
+            : msg
+        )
+      );
     }
   };
 
@@ -354,11 +430,11 @@ function Chat() {
             {displayMessages.map((msg) => (
               <div
                 key={msg._id}
-                className={
-                  msg.sendBy._id === currentUserId
+                className={`${
+                  msg.sendBy?._id === currentUserId
                     ? style.senderMessage
                     : style.recieverMessage
-                }
+                } ${msg.isOptimistic ? style.optimistic : ""}`}
               >
                 <div className={style.messageWrapper}>
                   {/* Reply Preview */}
@@ -407,25 +483,27 @@ function Chat() {
 
                       {/* Status + Menu */}
                       <div className={style.messageFooter}>
-                        {msg.sendBy._id === currentUserId && (
+                        {msg.sendBy?._id === currentUserId && (
                           <span className={style.status}>
-                            {msg.messageStatus === "seen" ? "✔✔" : "✔"}
+                            {msg.messageStatus === "sending" ? "⏳" : msg.messageStatus === "failed" ? "❌" : msg.messageStatus === "seen" ? "✔✔" : "✔"}
                           </span>
                         )}
 
-                        <span
-                          className={style.menuIcon}
-                          onClick={() => toggleMenu(msg._id)}
-                        >
-                          ⋮
-                        </span>
+                        {!msg.isOptimistic && (
+                          <span
+                            className={style.menuIcon}
+                            onClick={() => toggleMenu(msg._id)}
+                          >
+                            ⋮
+                          </span>
+                        )}
 
-                        {openMenu === msg._id && (
+                        {openMenu === msg._id && !msg.isOptimistic && (
                           <div className={style.dropdown}>
                             <button onClick={() => setReplyMsg(msg)}>
                               Reply
                             </button>
-                            {msg.sendBy._id === currentUserId && (
+                            {msg.sendBy?._id === currentUserId && (
                               <button onClick={() => deleteMessage(msg._id)}>
                                 Delete
                               </button>

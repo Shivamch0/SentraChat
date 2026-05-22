@@ -485,3 +485,8 @@
     padding: 12px 16px;
   }
 }
+
+.optimistic {
+  opacity: 0.6;
+  pointer-events: none;
+}
